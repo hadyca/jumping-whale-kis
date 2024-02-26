@@ -7,16 +7,10 @@ import start from "./start";
 import getCandle from "./api/candle";
 const app = express();
 
-// const handleHome = (req, res) => res.send("시작합니다~");
-
-// const handleProfile = (req, res) => res.send("You are on my profile");
-
-app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(helmet());
-app.use(morgan("dev"));
-app.get("/", getCandle);
+app.get("/", async (req, res) => {
+  const result = await start();
+  res.send(result);
+});
 
 // app.get("/profile", handleProfile);
 
