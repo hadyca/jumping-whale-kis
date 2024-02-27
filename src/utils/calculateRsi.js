@@ -1,5 +1,6 @@
 //rsi 계산 로직
 export default function calculateRsi(closingPriceArr) {
+  console.log(closingPriceArr);
   const changes = [];
   for (let i = 1; i < closingPriceArr.length; i++) {
     changes.push(closingPriceArr[i] - closingPriceArr[i - 1]);
@@ -51,7 +52,6 @@ export default function calculateRsi(closingPriceArr) {
       return beforeDu;
     }
   });
-  console.log(finalAuArr[finalAuArr.length]);
 
   //rs만들기
   const beforeRs =
@@ -59,9 +59,11 @@ export default function calculateRsi(closingPriceArr) {
   const nowRs =
     finalAuArr[finalAuArr.length - 1] / finalDuArr[finalDuArr.length - 1];
 
-  const beforeRsi = 100 - 100 / (1 + beforeRs);
-  const nowRsi = 100 - 100 / (1 + nowRs);
+  const bRsi = 100 - 100 / (1 + beforeRs);
+  const nRsi = 100 - 100 / (1 + nowRs);
 
+  const beforeRsi = bRsi.toFixed(2);
+  const nowRsi = nRsi.toFixed(2);
   return { beforeRsi, nowRsi };
 }
 

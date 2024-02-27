@@ -20,7 +20,7 @@ export default async function getToken() {
       options
     );
     const resData = await res.json();
-    console.log("kis 토큰값 :", resData);
+    return resData;
   } catch (error) {
     console.log("kis 토큰값 fetch 에러 :", resData);
   }
