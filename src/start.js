@@ -1,30 +1,32 @@
 require("dotenv").config();
-import fetch from "node-fetch";
+import getCandle from "./api/candle";
+import getClosingPrice from "./utils/reverse_closing";
+import calculateRsi from "./utils/calculateRsi";
+import getOverSeasCandle from "./api/overseasCandle";
 
 export default async function start(req, res, next) {
-  const apiKey = process.env.KIS_OPEN_API_ACCESS_KEY;
-  const secretKey = process.env.KIS_OPEN_API_SECRET_KEY;
-  res.send("헬로 월드!");
-  const body = {
-    grant_type: "client_credentials",
-    appkey: apiKey,
-    appsecret: secretKey,
-  };
-  const options = {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(body),
-  };
-  try {
-    const res = await fetch(
-      "https://openapi.koreainvestment.com:9443/oauth2/tokenP",
-      options
-    );
-    const resData = await res.json();
-    console.log("kis 토큰값 :", resData);
-  } catch (error) {
-    console.log("kis 토큰값 fetch 에러 :", error);
-  }
+  //candle값 가져오기
+  const candleData = await getOverSeasCandle();
+
+  //102개 종가 배열 [과거->최신순]
+  // const closingPriceArr = getClosingPrice(candleData);
+
+  // const rsiData = calculateRsi(closingPriceArr);
+  // console.log(rsiData);
+  // // 가져온 rsi값으로 매매하기
+  // const finalResult = await trading({
+  //   coinName: COIN_NAME,
+  //   coin_pay: COIN_PAY,
+  //   beforeRsi: rsiData.beforeRsi,
+  //   nowRsi: rsiData.nowRsi,
+  //   setRowRsi: SET_ROW_RSI,
+  //   setHighRsi: SET_HIGH_RSI,
+  // });
+
+  // if (finalResult === undefined) {
+  //   setTimeout(start, 1000);
+  // } else {
+  //   console.log("🎉 트레이딩 완료!");
+  //   next();
+  // }
 }

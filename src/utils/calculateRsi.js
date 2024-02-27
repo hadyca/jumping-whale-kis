@@ -8,6 +8,7 @@ export default function calculateRsi(closingPriceArr) {
   const gains = changes.map((change) => (change > 0 ? change : 0));
   const losses = changes.map((change) => (change < 0 ? -change : 0));
 
+  //14봉 기준
   const firstAuArr = gains.map((value, index) => {
     if (index < 13) {
       return null;
@@ -50,10 +51,13 @@ export default function calculateRsi(closingPriceArr) {
       return beforeDu;
     }
   });
+  console.log(finalAuArr[finalAuArr.length]);
 
   //rs만들기
-  const beforeRs = finalAuArr[197] / finalDuArr[197];
-  const nowRs = finalAuArr[198] / finalDuArr[198];
+  const beforeRs =
+    finalAuArr[finalAuArr.length - 2] / finalDuArr[finalDuArr.length - 2];
+  const nowRs =
+    finalAuArr[finalAuArr.length - 1] / finalDuArr[finalDuArr.length - 1];
 
   const beforeRsi = 100 - 100 / (1 + beforeRs);
   const nowRsi = 100 - 100 / (1 + nowRs);
