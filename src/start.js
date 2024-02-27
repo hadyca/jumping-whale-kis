@@ -20,6 +20,8 @@ export default async function start() {
   const candleValue = await getCandle(token);
   // 102개 종가 배열 [과거->최신순]
   const closingPriceArr = getClosingPrice(candleValue);
+
+  //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사하다.
   const rsiData = calculateRsi(closingPriceArr);
   console.log(rsiData);
   return candleValue;
