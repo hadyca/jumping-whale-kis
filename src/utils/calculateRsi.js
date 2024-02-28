@@ -1,6 +1,5 @@
 //rsi 계산 로직
 export default function calculateRsi(closingPriceArr) {
-  console.log(closingPriceArr);
   const changes = [];
   for (let i = 1; i < closingPriceArr.length; i++) {
     changes.push(closingPriceArr[i] - closingPriceArr[i - 1]);

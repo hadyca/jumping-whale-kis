@@ -1,6 +1,12 @@
 import fetch from "node-fetch";
 
-export default async function getCandle(token, ticker, interval) {
+export default async function getCandle_2(
+  token,
+  ticker,
+  interval,
+  inputDate,
+  inputHour
+) {
   const headers = {
     "content-type": "application/json",
     authorization: `Bearer ${token}`,
@@ -16,8 +22,8 @@ export default async function getCandle(token, ticker, interval) {
     FID_HOUR_CLS_CODE: interval,
     FID_PW_DATA_INCU_YN: "Y",
     FID_FAKE_TICK_INCU_YN: "N",
-    FID_INPUT_DATE_1: "",
-    FID_INPUT_HOUR_1: "",
+    FID_INPUT_DATE_1: inputDate,
+    FID_INPUT_HOUR_1: inputHour,
   };
   const queryString = new URLSearchParams(params).toString();
   const options = {
