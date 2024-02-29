@@ -1,6 +1,6 @@
 import sendTelegramMsg from "./telegramMsg";
 
-export default async function firstTrading({
+export default async function firstPosition({
   setRowRsi,
   setHighRsi,
   beforeRsi,
@@ -11,8 +11,8 @@ export default async function firstTrading({
   );
   if (beforeRsi < setRowRsi && nowRsi > setRowRsi) {
     //시장가 매수
-    //시장가 매수 관련 정보 텔레그램 알람
-    await sendTelegramMsg("샷");
+    //시장가 매수 관련 정보 텔레그램 알람 (계약수량, 평균체결가, 총체결가)
+    await sendTelegramMsg("매수성공");
     return; //리턴 값은 매수 id
   }
   if (beforeRsi > setHighRsi && nowRsi < setHighRsi) {

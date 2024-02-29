@@ -14,7 +14,6 @@ export default async function getCandle_2(
     appsecret: process.env.KIS_OPEN_API_SECRET_KEY,
     tr_id: "FHKIF03020200",
     custtype: "P",
-    tr_cont: "",
   };
   const params = {
     FID_COND_MRKT_DIV_CODE: "F",

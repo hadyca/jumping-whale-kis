@@ -6,7 +6,8 @@ import getClosingPrice from "./utils/reverse_closing";
 import calculateRsi from "./utils/calculateRsi";
 import getCandle from "./api/candle";
 import getCandle_2 from "./api/candle_2";
-import firstTrading from "./utils/firstTrading";
+import firstPosition from "./utils/firstPosition";
+import getBalance from "./api/balance";
 
 // 장시간 8:45~15:45, 최종거래일에는 8:45~15:20
 //해당 자동매매 운영시간은 8:45~15:15, 최종거래일에는 8:45~14:50로 설정(한국시간기준) -  장 마감 30분전에 종료
@@ -17,6 +18,8 @@ export default async function start() {
   const INTERVAL = {
     "5m": 60 * 5,
   };
+  const ACCOUNT = "46500144";
+  const ACCOUNT_TYPE = "03";
 
   //추 후 토큰 만료시간, 토큰 값 db 연동
   let tokenExpired = "2024-03-01 14:30:45";
@@ -57,29 +60,38 @@ export default async function start() {
   // //현재가
   // const nowPrice = candleValue[0].futs_prpr;
 
-  //최초 포지션 진입
-  //진입 가능 시간 설정 (8:45~15:15, 최종거래일에는 8:45~14:50) -  장 마감 30분전에 종료
-  const positionId = await firstTrading({
-    setRowRsi: SET_ROW_RSI,
-    setHighRsi: SET_HIGH_RSI,
-    beforeRsi: rsiData.beforeRsi,
-    nowRsi: rsiData.nowRsi,
-  });
+  // 기존 포지션이 없다면, 최초 포지션 진입
+  //잔고현황 api 가지고와야함
+  // const balance = await getBalance(token, ACCOUNT, ACCOUNT_TYPE);
+  // console.log(balance);
 
-  //위 포지션id로 평균 체결가 확인 및 익절가, 손절가 세팅
+  // if(포지션이 없다면){
+  //   const positionId = await firstPosition({
+  //     setRowRsi: SET_ROW_RSI,
+  //     setHighRsi: SET_HIGH_RSI,
+  //     beforeRsi: rsiData.beforeRsi,
+  //     nowRsi: rsiData.nowRsi,
+  //   });
+  // }
 
-  //if문으로 시장가 매도 익절가 세팅
-  //if문으로 시장가 매도 손절가 세팅
-  //만약 15:45까지 사장가 매도가 안되고 시장가 매수가 걸려 있다면 마지막 시간 대에 시장가 매도로 포지션 청산
+  //최초 포지션 진입이 안되면 다시 start실행 함수 실행,
+  // if (positionId === undefined) {
+  //   setTimeout(start, 1000);
+  // }
 
-  //if문으로 시장가 매수 익절가 세팅
-  //if문으로 시장가 매수 손절가 세팅
-  //만약 15:45까지 사장가 매수가 안되고 시장가 매도가 걸려 있다면 마지막 시간 대에 시장가 매수로 포지션 청산
+  //최초 포지션 진입이 성공 되면 실행
+  // if (positionId !== undefined) {
+  //   위 포지션id로 매수,매도 구분, 평균 체결가 확인 및 익절가, 손절가 세팅
 
-  if (positionId === undefined) {
-    setTimeout(start, 1000);
-  } else {
-    console.log("🎉 트레이딩 완료!");
-  }
-  return "성공";
+  //   만약 기존 포지션이 "매수"라면,
+  //   if문으로 시장가 매도 익절가 세팅
+  //   if문으로 시장가 매도 손절가 세팅
+  //   만약 15:45까지 사장가 매도가 안되고 시장가 매수가 걸려 있다면 마지막 시간 대에 시장가 매도로 포지션 청산
+
+  //   만약 기존 포지션이 "매도"라면,
+  //   if문으로 시장가 매수 익절가 세팅
+  //   if문으로 시장가 매수 손절가 세팅
+  //   만약 15:45까지 사장가 매수가 안되고 시장가 매도가 걸려 있다면 마지막 시간 대에 시장가 매수로 포지션 청산
+
+  // }
 }
