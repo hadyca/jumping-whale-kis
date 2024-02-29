@@ -19,9 +19,9 @@ export default async function start() {
   };
 
   //추 후 토큰 만료시간, 토큰 값 db 연동
-  let tokenExpired = "2024-02-29 12:44:41";
+  let tokenExpired = "2024-03-01 14:30:45";
   let token =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6ImExZjJjYThmLTQ2OGQtNDhlNy1hOWViLTFiY2EzMmUyOGNhYSIsImlzcyI6InVub2d3IiwiZXhwIjoxNzA5MTc4MjgxLCJpYXQiOjE3MDkwOTE4ODEsImp0aSI6IlBTUlViQ3RQdUJIVUVwcWRvTzdRNTU3NUlDbDFCejZKVE1zUCJ9.5WhKJUMlZMa7Qy7LPkTWWooI-VyOsjJx0Y3sZzhSh6t1Q5Ydl6mO6OayLjZf2xihwq73Yrxz_SKIg78OcS68bA";
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjQ4ZmE2NmQ0LTUyMWYtNDQ5My1hYjliLTNjM2E3YmU2YjA4YiIsImlzcyI6InVub2d3IiwiZXhwIjoxNzA5MjcxMDQ1LCJpYXQiOjE3MDkxODQ2NDUsImp0aSI6IlBTUlViQ3RQdUJIVUVwcWRvTzdRNTU3NUlDbDFCejZKVE1zUCJ9.4c6pEAasOJjRODhkFaNJ6YyeNI5W_w8RChE3TKhkmCoyG1hg2TiNbDhuYDg2d3MCJj3xCeza59dqUBC5zEK1yQ";
   const nowKoreaTime = getKoreaTime();
   if (nowKoreaTime > tokenExpired) {
     const tokenData = await getToken();
@@ -76,7 +76,7 @@ export default async function start() {
   //if문으로 시장가 매수 손절가 세팅
   //만약 15:45까지 사장가 매수가 안되고 시장가 매도가 걸려 있다면 마지막 시간 대에 시장가 매수로 포지션 청산
 
-  if (TradingResult === undefined) {
+  if (positionId === undefined) {
     setTimeout(start, 1000);
   } else {
     console.log("🎉 트레이딩 완료!");
