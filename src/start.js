@@ -8,6 +8,7 @@ import getCandle from "./api/candle";
 import getCandle_2 from "./api/candle_2";
 import firstPosition from "./utils/firstPosition";
 import getBalance from "./api/balance";
+import supabase from "./supabase";
 
 // 장시간 8:45~15:45, 최종거래일에는 8:45~15:20
 //해당 자동매매 운영시간은 8:45~15:15, 최종거래일에는 8:45~14:50로 설정(한국시간기준) -  장 마감 30분전에 종료
@@ -21,10 +22,12 @@ export default async function start() {
   const ACCOUNT = "46500144";
   const ACCOUNT_TYPE = "03";
 
+  let { data: user, error } = await supabase.from("user").select("*");
+  console.log(user);
   //추 후 토큰 만료시간, 토큰 값 db 연동
-  let tokenExpired = "2024-03-01 14:30:45";
+  let tokenExpired = "2024-03-11 20:05:35";
   let token =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjQ4ZmE2NmQ0LTUyMWYtNDQ5My1hYjliLTNjM2E3YmU2YjA4YiIsImlzcyI6InVub2d3IiwiZXhwIjoxNzA5MjcxMDQ1LCJpYXQiOjE3MDkxODQ2NDUsImp0aSI6IlBTUlViQ3RQdUJIVUVwcWRvTzdRNTU3NUlDbDFCejZKVE1zUCJ9.4c6pEAasOJjRODhkFaNJ6YyeNI5W_w8RChE3TKhkmCoyG1hg2TiNbDhuYDg2d3MCJj3xCeza59dqUBC5zEK1yQ";
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjgxYWIwMjExLWE0MTgtNDE3Yi1hZDdjLWVmOGI1MTBkOGJlMyIsImlzcyI6InVub2d3IiwiZXhwIjoxNzEwMTU1MTM1LCJpYXQiOjE3MTAwNjg3MzUsImp0aSI6IlBTUlViQ3RQdUJIVUVwcWRvTzdRNTU3NUlDbDFCejZKVE1zUCJ9.-TFvj5uasUxeFj2Savh2fz77Pz2rEjmGtgDo2sfrPdRr0ELo2YPWe1yqT8J_bM_OFoEoZKYidJ5PXBozPj_ngQ";
   const nowKoreaTime = getKoreaTime();
   if (nowKoreaTime > tokenExpired) {
     const tokenData = await getToken();
@@ -57,6 +60,7 @@ export default async function start() {
 
   //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사
   const rsiData = calculateRsi(closingPriceArr);
+  console.log(rsiData);
   // //현재가
   // const nowPrice = candleValue[0].futs_prpr;
 
