@@ -58,7 +58,7 @@ export default async function start() {
           tokenExpirationTime: tokenData?.access_token_token_expired,
         })
         .select();
-      start();
+      // start();
     }
   }
 }
