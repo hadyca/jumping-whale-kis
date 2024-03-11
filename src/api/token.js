@@ -1,4 +1,3 @@
-require("dotenv").config();
 import fetch from "node-fetch";
 
 export default async function getToken() {
@@ -14,14 +13,16 @@ export default async function getToken() {
     },
     body: JSON.stringify(body),
   };
+
+  const BASE_URL = "https://openapi.koreainvestment.com:9443";
+  const PATH = "/oauth2/tokenP";
+  const url = `${BASE_URL}${PATH}`;
+
   try {
-    const res = await fetch(
-      "https://openapi.koreainvestment.com:9443/oauth2/tokenP",
-      options
-    );
+    const res = await fetch(url, options);
     const resData = await res.json();
     return resData;
   } catch (error) {
-    console.log("kis 토큰값 fetch 에러 :", resData);
+    console.log("kis api token 에러:", resData);
   }
 }

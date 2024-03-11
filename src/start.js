@@ -1,4 +1,3 @@
-require("dotenv").config();
 import fetch from "node-fetch";
 import getToken from "./api/token";
 import getKoreaTime from "./utils/KoreaTime";
@@ -47,9 +46,9 @@ export default async function start() {
   //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
   if (token !== null && nowKoreaTime < tokenExpirationTime) {
     console.log("오토 트레이딩 시작");
-    const autoResult = await autoTrading(nowKoreaTime, tokenExpirationTime);
+    const autoResult = await autoTrading(token, tokenExpirationTime);
     if (autoResult === false) {
-      console.log("토큰 발행 및 supabase db 저장");
+      console.log("오토 트레이딩 정지&토큰 재발행 및 supabase db 저장");
       const tokenData = await getToken();
       await supabase
         .from("user")
@@ -59,8 +58,6 @@ export default async function start() {
           tokenExpirationTime: tokenData?.access_token_token_expired,
         })
         .select();
-      token = tokenData.access_token;
-      tokenExpirationTime = tokenData.access_token_token_expired;
       start();
     }
   }

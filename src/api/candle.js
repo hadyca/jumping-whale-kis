@@ -34,6 +34,6 @@ export default async function getCandle(token, ticker, interval) {
     const resData = await res.json();
     return resData.output2;
   } catch (error) {
-    console.log("kis 캔들 fetch 에러 :", error);
+    console.log("kis api candle 에러:", error);
   }
 }

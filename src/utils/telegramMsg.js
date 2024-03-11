@@ -1,5 +1,4 @@
 import fetch from "node-fetch";
-require("dotenv").config();
 
 export default async function sendTelegramMsg(msg) {
   try {

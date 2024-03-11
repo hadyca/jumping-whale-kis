@@ -32,6 +32,6 @@ export default async function getBalance(token, account, accountType) {
     const resData = await res.json();
     return resData.output2;
   } catch (error) {
-    console.log("kis 잔고현황 에러:", error);
+    console.log("kis api balance 에러:", error);
   }
 }
