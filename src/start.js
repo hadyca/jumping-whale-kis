@@ -2,100 +2,66 @@ require("dotenv").config();
 import fetch from "node-fetch";
 import getToken from "./api/token";
 import getKoreaTime from "./utils/KoreaTime";
-import getClosingPrice from "./utils/reverse_closing";
-import calculateRsi from "./utils/calculateRsi";
-import getCandle from "./api/candle";
-import getCandle_2 from "./api/candle_2";
-import firstPosition from "./utils/firstPosition";
-import getBalance from "./api/balance";
-import supabase from "./supabase";
+import supabase from "./supabaseClient";
+import autoTrading from "./utils/autoTrading";
 
 // 장시간 8:45~15:45, 최종거래일에는 8:45~15:20
 //해당 자동매매 운영시간은 8:45~15:15, 최종거래일에는 8:45~14:50로 설정(한국시간기준) -  장 마감 30분전에 종료
 export default async function start() {
-  const SET_ROW_RSI = 30;
-  const SET_HIGH_RSI = 70;
-  const TICKER = "105V03"; //미니 코스피200
-  const INTERVAL = {
-    "5m": 60 * 5,
-  };
-  const ACCOUNT = "46500144";
-  const ACCOUNT_TYPE = "03";
+  let token;
+  let tokenExpirationTime;
 
-  let { data: user, error } = await supabase.from("user").select("*");
-  console.log(user);
-  //추 후 토큰 만료시간, 토큰 값 db 연동
-  let tokenExpired = "2024-03-11 20:05:35";
-  let token =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjgxYWIwMjExLWE0MTgtNDE3Yi1hZDdjLWVmOGI1MTBkOGJlMyIsImlzcyI6InVub2d3IiwiZXhwIjoxNzEwMTU1MTM1LCJpYXQiOjE3MTAwNjg3MzUsImp0aSI6IlBTUlViQ3RQdUJIVUVwcWRvTzdRNTU3NUlDbDFCejZKVE1zUCJ9.-TFvj5uasUxeFj2Savh2fz77Pz2rEjmGtgDo2sfrPdRr0ELo2YPWe1yqT8J_bM_OFoEoZKYidJ5PXBozPj_ngQ";
-  const nowKoreaTime = getKoreaTime();
-  if (nowKoreaTime > tokenExpired) {
-    const tokenData = await getToken();
-    console.log(tokenData);
-    tokenExpired = tokenData.access_token_token_expired;
-    token = tokenData.access_token;
+  //초기시작 supabase db에서 토큰값 및 토큰만료시간 조회
+  const { data: userData, error } = await supabase
+    .from("user")
+    .select("*")
+    .eq("id", 1)
+    .single();
+  token = userData?.token;
+  tokenExpirationTime = userData?.tokenExpirationTime;
+  if (error) {
+    console.log("userData조회에러", error);
   }
 
-  //첫번째 캔들값 (102개 조회)
-  const candleValue = await getCandle(token, TICKER, INTERVAL["5m"]);
-  const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
-  const inputHour = candleValue[candleValue.length - 1].stck_cntg_hour;
-  //두번째 캔들값 (102개 조회)
-  const candleValue_2 = await getCandle_2(
-    token,
-    TICKER,
-    INTERVAL["5m"],
-    inputDate,
-    inputHour
-  );
+  //기존 토큰만료시간이 지났거나, supabase 조회 시 토큰값이 null인 경우 kis에서 token값 받아온 후, db에 저장
+  const nowKoreaTime = getKoreaTime();
+  if (
+    nowKoreaTime > tokenExpirationTime ||
+    token === null ||
+    tokenExpirationTime === null
+  ) {
+    console.log("토큰 발행 및 supabase db 저장");
+    const tokenData = await getToken();
+    await supabase
+      .from("user")
+      .upsert({
+        id: 1,
+        token: tokenData?.access_token,
+        tokenExpirationTime: tokenData?.access_token_token_expired,
+      })
+      .select();
+    token = tokenData.access_token;
+    tokenExpirationTime = tokenData.access_token_token_expired;
+  }
 
-  //첫번째 캔들값 마지막 배열 값 삭제(두번째 캔들값 첫번째와 중복되기 때문)
-  const newCandleValue = candleValue.slice(0, -1);
-
-  //2개 캔들값 합치기
-  const totalCandleValue = [...newCandleValue, ...candleValue_2];
-
-  // 102개 종가 배열 [과거->최신순]
-  const closingPriceArr = getClosingPrice(totalCandleValue);
-
-  //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사
-  const rsiData = calculateRsi(closingPriceArr);
-  console.log(rsiData);
-  // //현재가
-  // const nowPrice = candleValue[0].futs_prpr;
-
-  // 기존 포지션이 없다면, 최초 포지션 진입
-  //잔고현황 api 가지고와야함
-  // const balance = await getBalance(token, ACCOUNT, ACCOUNT_TYPE);
-  // console.log(balance);
-
-  // if(포지션이 없다면){
-  //   const positionId = await firstPosition({
-  //     setRowRsi: SET_ROW_RSI,
-  //     setHighRsi: SET_HIGH_RSI,
-  //     beforeRsi: rsiData.beforeRsi,
-  //     nowRsi: rsiData.nowRsi,
-  //   });
-  // }
-
-  //최초 포지션 진입이 안되면 다시 start실행 함수 실행,
-  // if (positionId === undefined) {
-  //   setTimeout(start, 1000);
-  // }
-
-  //최초 포지션 진입이 성공 되면 실행
-  // if (positionId !== undefined) {
-  //   위 포지션id로 매수,매도 구분, 평균 체결가 확인 및 익절가, 손절가 세팅
-
-  //   만약 기존 포지션이 "매수"라면,
-  //   if문으로 시장가 매도 익절가 세팅
-  //   if문으로 시장가 매도 손절가 세팅
-  //   만약 15:45까지 사장가 매도가 안되고 시장가 매수가 걸려 있다면 마지막 시간 대에 시장가 매도로 포지션 청산
-
-  //   만약 기존 포지션이 "매도"라면,
-  //   if문으로 시장가 매수 익절가 세팅
-  //   if문으로 시장가 매수 손절가 세팅
-  //   만약 15:45까지 사장가 매수가 안되고 시장가 매도가 걸려 있다면 마지막 시간 대에 시장가 매수로 포지션 청산
-
-  // }
+  //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
+  if (token !== null && nowKoreaTime < tokenExpirationTime) {
+    console.log("오토 트레이딩 시작");
+    const autoResult = await autoTrading(nowKoreaTime, tokenExpirationTime);
+    if (autoResult === false) {
+      console.log("토큰 발행 및 supabase db 저장");
+      const tokenData = await getToken();
+      await supabase
+        .from("user")
+        .upsert({
+          id: 1,
+          token: tokenData?.access_token,
+          tokenExpirationTime: tokenData?.access_token_token_expired,
+        })
+        .select();
+      token = tokenData.access_token;
+      tokenExpirationTime = tokenData.access_token_token_expired;
+      start();
+    }
+  }
 }
