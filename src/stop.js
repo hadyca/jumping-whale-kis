@@ -1,3 +1,6 @@
+import start from "./start";
+
 export default async function stop() {
-  let test;
+  start(true);
+  console.log("stop함수실행");
 }

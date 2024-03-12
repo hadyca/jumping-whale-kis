@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 
-export default async function marketBuy(
+export default async function marketOrder(
+  token,
   account,
   accountType,
   side,
@@ -36,6 +37,7 @@ export default async function marketBuy(
   try {
     const res = await fetch(url, options);
     const resData = await res.json();
+    console.log(resData);
     return resData;
   } catch (error) {
     console.log("kis api marketBuy 에러:", resData);
