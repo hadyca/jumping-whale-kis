@@ -1,28 +1,33 @@
 import fetch from "node-fetch";
 
-export default async function getCandle_2(
+export default async function getContractDetail(
   token,
-  ticker,
-  interval,
-  inputDate,
-  inputHour
+  account,
+  accountType,
+  today,
+  orderId
 ) {
   const headers = {
     "content-type": "application/json",
     authorization: `Bearer ${token}`,
     appkey: process.env.KIS_OPEN_API_ACCESS_KEY,
     appsecret: process.env.KIS_OPEN_API_SECRET_KEY,
-    tr_id: "FHKIF03020200",
+    tr_id: "TTTO5201R",
     custtype: "P",
   };
   const params = {
-    FID_COND_MRKT_DIV_CODE: "F",
-    FID_INPUT_ISCD: ticker,
-    FID_HOUR_CLS_CODE: interval,
-    FID_PW_DATA_INCU_YN: "Y",
-    FID_FAKE_TICK_INCU_YN: "N",
-    FID_INPUT_DATE_1: inputDate,
-    FID_INPUT_HOUR_1: inputHour,
+    CANO: account,
+    ACNT_PRDT_CD: accountType,
+    STRT_ORD_DT: today,
+    END_ORD_DT: today,
+    SLL_BUY_DVSN_CD: "00",
+    CCLD_NCCS_DVSN: "01",
+    SORT_SQN: "AS", //최신순
+    STRT_ODNO: orderId, //조회 시작 번호
+    PDNO: "",
+    MKET_ID_CD: "",
+    CTX_AREA_FK200: "",
+    CTX_AREA_NK200: "",
   };
   const queryString = new URLSearchParams(params).toString();
   const options = {
@@ -30,17 +35,15 @@ export default async function getCandle_2(
     headers,
   };
   const BASE_URL = "https://openapi.koreainvestment.com:9443";
-  const PATH =
-    "/uapi/domestic-futureoption/v1/quotations/inquire-time-fuopchartprice";
+  const PATH = "/uapi/domestic-futureoption/v1/trading/inquire-ccnl";
   const PARAMS = `?${queryString}`;
 
   const url = `${BASE_URL}${PATH}${PARAMS}`;
   try {
     const res = await fetch(url, options);
     const resData = await res.json();
-    return resData.output2;
+    return resData.output1[0];
   } catch (error) {
-    console.log("kis api candle_2 에러:", error);
-    return;
+    console.log("kis api contractDetail 에러:", error);
   }
 }

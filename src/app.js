@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import supabase from "./supabaseClient";
 import { startTrading, stopTrading } from "./startTrading";
+import test from "./test";
 const app = express();
 
 app.get("/", async (req, res) => {
@@ -16,10 +17,10 @@ app.get("/", async (req, res) => {
     .single();
   const token = userData?.token;
   const tokenExpirationTime = userData?.tokenExpirationTime;
-
   if (error) {
     console.log("userData조회에러", error);
   }
+
   console.log("🚀 트레이딩 시작");
   await startTrading(token, tokenExpirationTime);
   res.send("시작");
@@ -29,6 +30,12 @@ app.get("/stop", async (req, res) => {
   console.log("⛔ 트레이딩 정지");
   stopTrading();
   res.send("자동매매정지");
+});
+
+app.get("/test", async (req, res) => {
+  console.log("테스트 함수 실행");
+  test();
+  res.send("테스트 화면");
 });
 
 // app.get("/profile", handleProfile);

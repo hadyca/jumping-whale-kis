@@ -10,12 +10,6 @@ import autoTrading from "./utils/autoTrading";
 let startTradingTimeout;
 
 export async function startTrading(token, tokenExpirationTime) {
-  let newToken;
-  let newTokenExpirationTime;
-  if (token !== null && tokenExpirationTime != null) {
-    newToken = token;
-    newTokenExpirationTime = tokenExpirationTime;
-  }
   //기존 토큰만료시간이 지났거나, supabase 조회 시 토큰값이 null인 경우 kis에서 token값 받아온 후, db에 저장
   const nowKoreaDate = getKoreaTime();
 
@@ -34,18 +28,17 @@ export async function startTrading(token, tokenExpirationTime) {
         tokenExpirationTime: tokenData?.access_token_token_expired,
       })
       .select();
-    newToken = tokenData.access_token;
-    newTokenExpirationTime = tokenData.access_token_token_expired;
+    startTrading(tokenData.access_token, tokenData.access_token_token_expired);
   }
 
   //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
   if (token !== null && nowKoreaDate < tokenExpirationTime) {
     const autoResult = await autoTrading(token, tokenExpirationTime);
 
-    startTradingTimeout = setTimeout(
-      () => startTrading(token, tokenExpirationTime),
-      1000
-    );
+    // startTradingTimeout = setTimeout(
+    //   () => startTrading(token, tokenExpirationTime),
+    //   1000
+    // );
   }
 }
 

@@ -7,6 +7,7 @@ import { getKoreaHour } from "./KoreaTime";
 import getAvailableQty from "../api/availableQty";
 import sendTelegramMsg from "./telegramMsg";
 import marketOrder from "../api/marketOrder";
+import getContractDetail from "../api/contractDetail";
 
 //내 포지션, 자동 매매 봇 정지하면 초기화 됨
 let BuyPositionAry = [];
@@ -24,13 +25,13 @@ export default async function autoTrading(token) {
   // 자동봇 거래시간
   const nowKoreaHour = getKoreaHour();
 
-  // if (
-  //   nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
-  //   nowKoreaHour > FORCED_LIQUIDATE_TIME
-  // ) {
-  //   console.log("자동 봇 매매 시간이 아닙니다.");
-  //   return;
-  // }
+  if (
+    nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
+    nowKoreaHour > FORCED_LIQUIDATE_TIME
+  ) {
+    console.log("자동 봇 매매 시간이 아닙니다.");
+    return;
+  }
 
   //to-be최종거래일일 때 자동거래시간 세팅필요
 
@@ -42,6 +43,7 @@ export default async function autoTrading(token) {
   };
   const ACCOUNT = "46500144";
   const ACCOUNT_TYPE = "03";
+
   //첫번째 캔들값 (102개 조회)
   const candleValue = await getCandle(token, TICKER, INTERVAL["5m"]);
   const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
@@ -54,7 +56,6 @@ export default async function autoTrading(token) {
     inputDate,
     inputHour
   );
-
   //첫번째 캔들값 마지막 배열 값 삭제(두번째 캔들값 첫번째와 중복되기 때문)
   const newCandleValue = candleValue.slice(0, -1);
 
@@ -67,6 +68,7 @@ export default async function autoTrading(token) {
   //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사
   const rsiData = calculateRsi(closingPriceArr);
 
+  //주문 가능수량 조회
   // const qty = await getAvailableQty(
   //   token,
   //   ACCOUNT,
@@ -83,11 +85,20 @@ export default async function autoTrading(token) {
   //같은 시간 대 중복 매매 되지 않도록 세팅
   const currentCandleTime = candleValue[0].stck_cntg_hour;
   const haveTimeBuyPosition = BuyPositionAry.some(
-    (obj) => obj.tradingCandleTime === currentCandleTime
+    (obj) => obj.contractCandleTime === currentCandleTime
   );
   const haveTimeSellPosition = SellPositionAry.some(
-    (obj) => obj.tradingCandleTime === currentCandleTime
+    (obj) => obj.contractCandleTime === currentCandleTime
   );
+
+  // const contractResult = await getContractDetail(
+  //   token,
+  //   ACCOUNT,
+  //   ACCOUNT_TYPE,
+  //   candleValue[0].stck_bsop_date,
+  //   "0000007453"
+  // );
+  // console.log(contractResult);
 
   //시장가 매수 포지션 진입
   if (
@@ -104,21 +115,42 @@ export default async function autoTrading(token) {
       TICKER,
       "1" //오더수량
     );
-    //to-be:시장가 매수 관련 정보 텔레그램 알람 (계약수량, 평균체결가, 총체결가)
-    await sendTelegramMsg("🔼매수 포지션 진입");
+    console.log(marketBuyResult);
 
-    //to-be:포지션 객체 생성 및 배열에 객체 넣기
+    //매수 포지션 진입한 거래 내역 조회
+    const contractResult = await getContractDetail(
+      token,
+      ACCOUNT,
+      ACCOUNT_TYPE,
+      candleValue[0].stck_bsop_date, //매매 당시 날짜
+      marketBuyResult.ODNO //매매 주문 번호
+    );
+
+    //익절,손절 목표가
+    const profitPrice =
+      candleValue[0].futs_prpr + candleValue[0].futs_prpr * PROFIT_PERCENT;
+    const lossPrice =
+      candleValue[0].futs_prpr - candleValue[0].futs_prpr * LOSS_PERCENT;
+
+    //텔레그램 알람
+    await sendTelegramMsg(`
+🔼매수 포지션 진입
+계약수량:${contractResult.tot_ccld_qty}
+평균체결가:${contractResult.avg_idx}
+익절목표가:${profitPrice}
+손절목표가:${lossPrice}
+    `);
+
+    //포지션 객체 생성 및 배열에 객체 넣기
     const newPosition = {
-      id: "123",
+      id: marketBuyResult.ODNO, //주문 번호
       side: "buy",
-      tradingCandleTime: candleValue[0].stck_cntg_hour, //매매 시간 구간
-      unit: "1",
-      price: candleValue[0].futs_prpr, //임시로 현재가 넣었고, 추 후 실제 매매 데이터 확인해서 넣어야함
-      totalPrice: "1" * candleValue[0].futs_prpr,
-      profitPrice:
-        candleValue[0].futs_prpr + candleValue[0].futs_prpr * PROFIT_PERCENT,
-      lossPrice:
-        candleValue[0].futs_prpr - candleValue[0].futs_prpr * PROFIT_PERCENT,
+      contractCandleTime: candleValue[0].stck_cntg_hour, //매매 시간 구간
+      unit: contractResult.tot_ccld_qty,
+      price: contractResult.avg_idx,
+      totalPrice: contractResult.tot_ccld_amt,
+      profitPrice,
+      lossPrice,
     };
     BuyPositionAry.push(newPosition);
   }
@@ -138,34 +170,62 @@ export default async function autoTrading(token) {
       TICKER,
       "1" //오더수량
     );
-    //to-be:시장가 매도 관련 정보 텔레그램 알람 (계약수량, 평균체결가, 총체결가)
-    await sendTelegramMsg("🔽매도 포지션 진입");
-    //to-be:포지션 객체 생성 및 배열에 객체 넣기
+    console.log(marketSellResult);
+
+    //매도 포지션 진입한 거래 내역 조회
+    const contractResult = await getContractDetail(
+      token,
+      ACCOUNT,
+      ACCOUNT_TYPE,
+      candleValue[0].stck_bsop_date, //매매 당시 날짜
+      marketSellResult.ODNO //매매 주문 번호
+    );
+
+    //익절, 손절 목표가
+    const profitPrice =
+      candleValue[0].futs_prpr - candleValue[0].futs_prpr * PROFIT_PERCENT;
+    const lossPrice =
+      candleValue[0].futs_prpr + candleValue[0].futs_prpr * LOSS_PERCENT;
+
+    //텔레그램 알람
+    await sendTelegramMsg(`
+🔽매도 포지션 진입
+계약수량:${contractResult.tot_ccld_qty}
+평균체결가:${contractResult.avg_idx}
+익절목표가:${profitPrice}
+손절목표가:${lossPrice}
+`);
+
+    //포지션 객체 생성 및 배열에 객체 넣기
     const newPosition = {
-      id: "123",
+      id: marketSellResult.ODNO, //주문 번호
       side: "sell",
-      tradingCandleTime: candleValue[0].stck_cntg_hour, //매매 시간 구간
-      unit: "1",
-      price: candleValue[0].futs_prpr,
-      totalPrice: "1" * candleValue[0].futs_prpr,
-      profitPrice:
-        candleValue[0].futs_prpr - candleValue[0].futs_prpr * PROFIT_PERCENT,
-      lossPrice:
-        candleValue[0].futs_prpr + candleValue[0].futs_prpr * PROFIT_PERCENT,
+      contractCandleTime: candleValue[0].stck_cntg_hour, //매매 시간 구간
+      unit: contractResult.tot_ccld_qty,
+      price: contractResult.avg_idx,
+      totalPrice: contractResult.tot_ccld_amt,
+      profitPrice,
+      lossPrice,
     };
     SellPositionAry.push(newPosition);
   }
 
   //to-be:익절/손절 구간 시 청산 로직  (find함수 써야할듯?)
+  // if(매수 포지션에 익절금액이 현재가 보다 크거나,손절금액이 현재가보다 작으면){
+  //   시장가 매도 처리 후 매수 포지션 배열에서 해당 객체 삭제
+  // }
+  // if(매도 포지션에 익절금액이 현재가 보다 작거나,손절금액이 현재가보다 크면){
+  //   시장가 매수 처리 후 매도 포지션 배열에서 해당 객체 삭제
+  // }
 
   //to-be:익절/손절 구간이 아니지만 장 종료전 청산 잔량이 남았을 때 청산 로직(현재시간이 설정한 강제청산시간과 같을 때, 포지션 배열에 값이 남아있다면 청산 진행)
-
-  console.log(rsiData);
-  console.log("현재가:", candleValue[0].futs_prpr);
   console.log(
-    "보유 매수 포지션:",
+    rsiData,
+    "/ 현재가:",
+    candleValue[0].futs_prpr,
+    "/ 매수 포지션:",
     BuyPositionAry,
-    "/ 보유 매도 포지션:",
+    "/ 매도 포지션",
     SellPositionAry
   );
 }

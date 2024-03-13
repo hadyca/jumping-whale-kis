@@ -37,8 +37,7 @@ export default async function marketOrder(
   try {
     const res = await fetch(url, options);
     const resData = await res.json();
-    console.log(resData);
-    return resData;
+    return resData.output;
   } catch (error) {
     console.log("kis api marketBuy 에러:", resData);
   }
