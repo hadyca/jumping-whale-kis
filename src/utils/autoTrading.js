@@ -21,8 +21,10 @@ export default async function autoTrading(token) {
   const INTERVAL = {
     "5m": 60 * 5,
   };
+
   const ACCOUNT = "46500144";
   const ACCOUNT_TYPE = "03";
+
   //수익 퍼센티지 설정
   const PROFIT_PERCENT = 0.001; //0.1%
   const LOSS_PERCENT = 0.001; //0.1%
@@ -42,7 +44,7 @@ export default async function autoTrading(token) {
 
   //첫번째 캔들값 (102개 조회)
   const candleValue = await getCandle(token, TICKER, INTERVAL["5m"]);
-  const currentPrice = parseFloat(candleValue[0].futs_prpr);
+
   // if (
   //   nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
   //   nowKoreaHour > FORCED_LIQUIDATE_TIME ||
@@ -51,7 +53,7 @@ export default async function autoTrading(token) {
   //   console.log("자동 봇 매매 시간이 아닙니다.");
   //   return;
   // }
-
+  const currentPrice = parseFloat(candleValue[0].futs_prpr);
   const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
   const inputHour = candleValue[candleValue.length - 1].stck_cntg_hour;
   //두번째 캔들값 (102개 조회)
