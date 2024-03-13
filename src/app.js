@@ -10,6 +10,7 @@ const app = express();
 
 app.get("/", async (req, res) => {
   //초기시작 supabase db에서 토큰값 및 토큰만료시간 조회
+  //to-be:try catch나, 다른 방법으로 에러나면 다시 조회 하는 방식으로 변경(함수로 만들어야 할듯, 10회 시도해보고 안되면 텔레그램 메시지 보내고 멈춤)
   const { data: userData, error } = await supabase
     .from("user")
     .select("*")
