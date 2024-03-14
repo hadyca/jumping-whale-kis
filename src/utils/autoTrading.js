@@ -14,7 +14,12 @@ import convertComma from "./commas";
 let BuyPositionAry = [];
 let SellPositionAry = [];
 
-export default async function autoTrading(token) {
+export async function autoTrading(token, stopSignal) {
+  if (stopSignal) {
+    BuyPositionAry = [];
+    SellPositionAry = [];
+    return;
+  }
   const SET_ROW_RSI = 30;
   const SET_HIGH_RSI = 70;
   const TICKER = "105V03"; //미니 코스피200
@@ -45,15 +50,17 @@ export default async function autoTrading(token) {
   //첫번째 캔들값 (102개 조회)
   const candleValue = await getCandle(token, TICKER, INTERVAL["5m"]);
 
-  // if (
-  //   nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
-  //   nowKoreaHour > FORCED_LIQUIDATE_TIME ||
-  //   candleValue[0].stck_cntg_hour === "084500"
-  // ) {
-  //   console.log("자동 봇 매매 시간이 아닙니다.");
-  //   return;
-  // }
-  const currentPrice = parseFloat(candleValue[0].futs_prpr);
+  if (
+    nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
+    nowKoreaHour > FORCED_LIQUIDATE_TIME ||
+    candleValue[0].stck_cntg_hour === "084500"
+  ) {
+    console.log("자동 봇 매매 시간이 아닙니다.");
+    return;
+  }
+
+  const currentPoint = parseFloat(candleValue[0].futs_prpr);
+
   const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
   const inputHour = candleValue[candleValue.length - 1].stck_cntg_hour;
   //두번째 캔들값 (102개 조회)
@@ -95,15 +102,6 @@ export default async function autoTrading(token) {
     (obj) => obj.contractCandleTime === currentCandleTime
   );
 
-  // const contractResult = await getContractDetail(
-  //   token,
-  //   ACCOUNT,
-  //   ACCOUNT_TYPE,
-  //   candleValue[0].stck_bsop_date,
-  //   "0000007453"
-  // );
-  // console.log(contractResult);
-
   //시장가 매수 포지션 진입
   if (
     rsiData.beforeRsi < SET_ROW_RSI &&
@@ -111,6 +109,7 @@ export default async function autoTrading(token) {
     nowKoreaHour < POSITION_LAST_ENTRY_TIME &&
     !haveTimeBuyPosition
   ) {
+    console.log("시장가 매수 포지션 진입 성공");
     const marketBuyResult = await marketOrder(
       token,
       ACCOUNT,
@@ -131,8 +130,8 @@ export default async function autoTrading(token) {
     );
 
     //익절,손절 목표가 (포인트임)
-    const targetProfit = currentPrice + currentPrice * PROFIT_PERCENT;
-    const targetLoss = currentPrice - currentPrice * LOSS_PERCENT;
+    const targetProfit = currentPoint + currentPoint * PROFIT_PERCENT;
+    const targetLoss = currentPoint - currentPoint * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
@@ -172,6 +171,7 @@ export default async function autoTrading(token) {
     nowKoreaHour < POSITION_LAST_ENTRY_TIME &&
     !haveTimeSellPosition
   ) {
+    console.log("시장가 매도 포지션 진입 성공");
     const marketSellResult = await marketOrder(
       token,
       ACCOUNT,
@@ -192,8 +192,8 @@ export default async function autoTrading(token) {
     );
 
     //익절, 손절 목표가
-    const targetProfit = currentPrice - currentPrice * PROFIT_PERCENT;
-    const targetLoss = currentPrice + currentPrice * LOSS_PERCENT;
+    const targetProfit = currentPoint - currentPoint * PROFIT_PERCENT;
+    const targetLoss = currentPoint + currentPoint * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
@@ -227,14 +227,12 @@ export default async function autoTrading(token) {
 
   //매수 포지션 조건에 맞는 객체 찾기 (조건:익절금액이 현재가 보다 크거나,손절금액이 현재가보다 작음)
   const buyPositionObj = BuyPositionAry.find(
-    (obj) =>
-      obj["targetProfit"] > currentPrice || obj["targetLoss"] < currentPrice
+    (obj) => currentPoint > obj.targetProfit || currentPoint < obj.targetLoss
   );
 
   //매도 포지션 조건에 맞는 객체 찾기 (조건:익절금액이 현재가 보다 작거나,손절금액이 현재가보다 큼)
   const sellPositionObj = SellPositionAry.find(
-    (obj) =>
-      obj["targetProfit"] < currentPrice || obj["targetLoss"] > currentPrice
+    (obj) => currentPoint < obj.targetProfit || currentPoint > obj.targetLoss
   );
 
   //매수 포지션 청산 로직
@@ -301,7 +299,7 @@ export default async function autoTrading(token) {
       ACCOUNT,
       ACCOUNT_TYPE,
       candleValue[0].stck_bsop_date, //매매 당시 날짜
-      marketSellResult.ODNO //매매 주문 번호
+      marketBuyResult.ODNO //매매 주문 번호
     );
 
     const totalPrice = contractResult.tot_ccld_amt;
@@ -323,8 +321,8 @@ export default async function autoTrading(token) {
 `);
 
     //포지션 배열에서 해당값 삭제
-    const foundIndex = sellPositionObj.indexOf(sellPositionObj);
-    sellPositionObj.splice(foundIndex, 1);
+    const foundIndex = SellPositionAry.indexOf(sellPositionObj);
+    SellPositionAry.splice(foundIndex, 1);
   }
 
   //to-be:익절/손절 구간이 아니지만 장 종료전 청산 잔량이 남았을 때 청산 로직
@@ -334,7 +332,7 @@ export default async function autoTrading(token) {
   console.log(
     rsiData,
     "/ 현재가:",
-    currentPrice,
+    currentPoint,
     "/ 매수 포지션:",
     BuyPositionAry,
     "/ 매도 포지션",

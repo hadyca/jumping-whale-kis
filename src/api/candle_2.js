@@ -41,6 +41,6 @@ export default async function getCandle_2(
     return resData.output2;
   } catch (error) {
     console.log("kis api candle_2 에러:", error);
-    return;
+    return await getCandle_2(token, ticker, interval, inputDate, inputHour);
   }
 }

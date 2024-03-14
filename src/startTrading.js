@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 import getToken from "./api/token";
 import { getKoreaHour, getKoreaTime } from "./utils/KoreaTime";
 import supabase from "./supabaseClient";
-import autoTrading from "./utils/autoTrading";
+import { autoTrading } from "./utils/autoTrading";
 
 // 장시간 8:45~15:45, 최종거래일에는 8:45~15:20
 //해당 자동매매 운영시간은 8:45~15:15, 최종거래일에는 8:45~14:50로 설정(한국시간기준) -  장 마감 30분전에 종료
@@ -33,16 +33,17 @@ export async function startTrading(token, tokenExpirationTime) {
 
   //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
   if (token !== null && nowKoreaDate < tokenExpirationTime) {
-    const autoResult = await autoTrading(token, tokenExpirationTime);
+    const autoResult = await autoTrading(token);
 
-    // startTradingTimeout = setTimeout(
-    //   () => startTrading(token, tokenExpirationTime),
-    //   1000
-    // );
+    startTradingTimeout = setTimeout(
+      () => startTrading(token, tokenExpirationTime),
+      1000
+    );
   }
 }
 
 // 재귀 호출 중지
-export function stopTrading() {
+export async function stopTrading() {
+  await autoTrading("_", true);
   clearTimeout(startTradingTimeout);
 }
