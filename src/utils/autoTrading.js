@@ -22,7 +22,7 @@ export async function autoTrading(token, stopSignal) {
   }
   const SET_ROW_RSI = 30;
   const SET_HIGH_RSI = 70;
-  const TICKER = "105V03"; //미니 코스피200
+  const TICKER = "105V04"; //미니 코스피200 4월물
   const INTERVAL = {
     "5m": 60 * 5,
   };
