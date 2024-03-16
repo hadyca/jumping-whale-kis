@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import getToken from "./api/token";
-import { getKoreaHour, getKoreaTime } from "./utils/KoreaTime";
+import { getKoreaHour, getKoreaTime_plus1m } from "./utils/KoreaTime";
 import supabase from "./supabaseClient";
 import { autoTrading } from "./utils/autoTrading";
 
@@ -11,7 +11,7 @@ let startTradingTimeout;
 
 export async function startTrading(token, tokenExpirationTime) {
   //기존 토큰만료시간이 지났거나, supabase 조회 시 토큰값이 null인 경우 kis에서 token값 받아온 후, db에 저장
-  const nowKoreaDate = getKoreaTime();
+  const nowKoreaDate = getKoreaTime_plus1m();
 
   if (
     nowKoreaDate > tokenExpirationTime ||
@@ -37,7 +37,7 @@ export async function startTrading(token, tokenExpirationTime) {
 
     startTradingTimeout = setTimeout(
       () => startTrading(token, tokenExpirationTime),
-      1000
+      500
     );
   }
 }
