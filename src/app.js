@@ -6,24 +6,16 @@ import bodyParser from "body-parser";
 import supabase from "./supabaseClient";
 import { startTrading, stopTrading } from "./startTrading";
 import test from "./test";
+import getUserToken from "./utils/userToken";
 const app = express();
 
 app.get("/", async (req, res) => {
   //초기시작 supabase db에서 토큰값 및 토큰만료시간 조회
-  //to-be:try catch나, 다른 방법으로 에러나면 다시 조회 하는 방식으로 변경(함수로 만들어야 할듯, 10회 시도해보고 안되면 텔레그램 메시지 보내고 멈춤)
-  const { data: userData, error } = await supabase
-    .from("user")
-    .select("*")
-    .eq("id", 1)
-    .single();
-  const token = userData?.token;
-  const tokenExpirationTime = userData?.tokenExpirationTime;
-  if (error) {
-    console.log("userData조회에러", error);
-  }
+
+  const userData = await getUserToken();
 
   console.log("🚀 트레이딩 시작");
-  await startTrading(token, tokenExpirationTime);
+  await startTrading(userData.token, userData.tokenExpirationTime);
   res.send("시작");
 });
 
