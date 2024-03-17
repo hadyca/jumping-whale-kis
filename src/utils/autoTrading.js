@@ -11,13 +11,13 @@ import getContractDetail from "../api/contractDetail";
 import convertComma from "./commas";
 
 //내 보유 포지션
-let BuyPositionAry = [];
-let SellPositionAry = [];
+let buyPositionAry = [];
+let sellPositionAry = [];
 
 export async function autoTrading(token, stopSignal) {
   if (stopSignal) {
-    BuyPositionAry = [];
-    SellPositionAry = [];
+    buyPositionAry = [];
+    sellPositionAry = [];
     return;
   }
   const SET_ROW_RSI = 30;
@@ -35,8 +35,10 @@ export async function autoTrading(token, stopSignal) {
   const LOSS_PERCENT = 0.001; //0.1%
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
-  const POSITION_LAST_ENTRY_TIME = "15:20:00";
-  const FORCED_LIQUIDATE_TIME = "15:30:00";
+
+  //to-be:이건 5분봉 기준이다. 몇분봉에 따라서 시간이 바뀌어야함.(30분 기준 )
+  const FORCED_LIQUIDATE_START_TIME = "15:34:50";
+  const FORCED_LIQUIDATE_TIME = "15:35:00";
 
   //최종 거래일 기준 (최종거래일에는 아래 시간으로 세팅)
   const LASTDAY_POSITION_LAST_ENTRY_TIME = "14:50:00";
@@ -95,10 +97,10 @@ export async function autoTrading(token, stopSignal) {
 
   //같은 시간 대 중복 매매 되지 않도록 세팅
   const currentCandleTime = candleValue[0].stck_cntg_hour;
-  const haveTimeBuyPosition = BuyPositionAry.some(
+  const haveTimeBuyPosition = buyPositionAry.some(
     (obj) => obj.contractCandleTime === currentCandleTime
   );
-  const haveTimeSellPosition = SellPositionAry.some(
+  const haveTimeSellPosition = sellPositionAry.some(
     (obj) => obj.contractCandleTime === currentCandleTime
   );
 
@@ -161,7 +163,7 @@ export async function autoTrading(token, stopSignal) {
       targetProfit,
       targetLoss,
     };
-    BuyPositionAry.push(newPosition);
+    buyPositionAry.push(newPosition);
   }
 
   //시장가 매도 포지션 진입
@@ -222,16 +224,16 @@ export async function autoTrading(token, stopSignal) {
       targetProfit,
       targetLoss,
     };
-    SellPositionAry.push(newPosition);
+    sellPositionAry.push(newPosition);
   }
 
   //매수 포지션 조건에 맞는 객체 찾기 (조건:익절금액이 현재가 보다 크거나,손절금액이 현재가보다 작음)
-  const buyPositionObj = BuyPositionAry.find(
+  const buyPositionObj = buyPositionAry.find(
     (obj) => currentPoint > obj.targetProfit || currentPoint < obj.targetLoss
   );
 
   //매도 포지션 조건에 맞는 객체 찾기 (조건:익절금액이 현재가 보다 작거나,손절금액이 현재가보다 큼)
-  const sellPositionObj = SellPositionAry.find(
+  const sellPositionObj = sellPositionAry.find(
     (obj) => currentPoint < obj.targetProfit || currentPoint > obj.targetLoss
   );
 
@@ -276,8 +278,8 @@ export async function autoTrading(token, stopSignal) {
 `);
 
     //포지션 배열에서 해당값 삭제
-    const foundIndex = BuyPositionAry.indexOf(buyPositionObj);
-    BuyPositionAry.splice(foundIndex, 1);
+    const foundIndex = buyPositionAry.indexOf(buyPositionObj);
+    buyPositionAry.splice(foundIndex, 1);
   }
 
   //매도 포지션 청산 로직
@@ -321,21 +323,54 @@ export async function autoTrading(token, stopSignal) {
 `);
 
     //포지션 배열에서 해당값 삭제
-    const foundIndex = SellPositionAry.indexOf(sellPositionObj);
-    SellPositionAry.splice(foundIndex, 1);
+    const foundIndex = sellPositionAry.indexOf(sellPositionObj);
+    sellPositionAry.splice(foundIndex, 1);
   }
 
   //to-be:익절/손절 구간이 아니지만 장 종료전 청산 잔량이 남았을 때 청산 로직
   //(현재시간이 설정한 강제청산시간과 같을 때, 포지션 배열에 값이 남아있다면 청산 진행)
   //마지막 시간에 포지션 배열에 아무 값도 남아 있으면 안됨
 
+  if (nowKoreaHour > FORCED_LIQUIDATE_START_TIME && buyPositionAry.length > 0) {
+    //매수 포지션 강제 청산
+    buyPositionAry.map(async (obj) => {
+      const marketSellResult = await marketOrder(
+        token,
+        ACCOUNT,
+        ACCOUNT_TYPE,
+        "01", //01:매도, 02:매수
+        TICKER,
+        obj.unit //오더수량
+      );
+    });
+    buyPositionAry = [];
+  }
+
+  if (
+    nowKoreaHour > FORCED_LIQUIDATE_START_TIME &&
+    sellPositionAry.length > 0
+  ) {
+    //매도 포지션 강제 청산
+    sellPositionAry.map(async (obj) => {
+      const marketBuyResult = await marketOrder(
+        token,
+        ACCOUNT,
+        ACCOUNT_TYPE,
+        "02", //01:매도, 02:매수
+        TICKER,
+        obj.unit //오더수량
+      );
+    });
+    sellPositionAry = [];
+  }
+
   console.log(
     rsiData,
     "/ 현재가:",
     currentPoint,
     "/ 매수 포지션:",
-    BuyPositionAry,
+    buyPositionAry,
     "/ 매도 포지션",
-    SellPositionAry
+    sellPositionAry
   );
 }

@@ -1,3 +1,4 @@
+import supabase from "../supabaseClient";
 import sendTelegramMsg from "./telegramMsg";
 
 let errorCount = 0;

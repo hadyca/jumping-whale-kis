@@ -1,10 +1,6 @@
-export default async function test(num) {
-  let BuyPositionAry = [{ targetProfit: "10", targetLoss: "5" }];
-
-  const currentPrice = 4;
-
-  const buyPositionObj = BuyPositionAry.find(
-    (obj) => obj.targetProfit < currentPrice || obj.targetLoss > currentPrice
-  );
-  console.log(buyPositionObj);
+export default async function test() {
+  let test = [1, 2, 3];
+  test.map((value) => console.log(value + 2));
+  test = [];
+  console.log(test);
 }
