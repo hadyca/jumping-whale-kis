@@ -63,7 +63,6 @@ export async function autoTrading(token, stopSignal) {
 
   //첫번째 캔들값 (102개 조회)
   const candleValue = await getCandle(token, TICKER, INTERVAL["5m"]);
-
   if (
     nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
     nowKoreaHour > FORCED_LIQUIDATE_TIME ||
@@ -121,7 +120,7 @@ export async function autoTrading(token, stopSignal) {
       ACCOUNT_TYPE,
       "02", //01:매도, 02:매수
       TICKER,
-      "1" //오더수량
+      "2" //오더수량
     );
 
     //매수 포지션 진입한 거래 내역 조회
@@ -183,7 +182,7 @@ export async function autoTrading(token, stopSignal) {
       ACCOUNT_TYPE,
       "01", //01:매도, 02:매수
       TICKER,
-      "1" //오더수량
+      "2" //오더수량
     );
 
     //매도 포지션 진입한 거래 내역 조회
@@ -284,7 +283,6 @@ export async function autoTrading(token, stopSignal) {
 
   //익절/손절 구간이 아니지만 장 종료전 청산 잔량이 남았을 때 청산 로직
   if (nowKoreaHour > FORCED_LIQUIDATE_START_TIME) {
-    await sendTelegramMsg("청산시간입니당10초");
     buyEntryCandleTime = null;
     sellEntryCandleTime = null;
 
