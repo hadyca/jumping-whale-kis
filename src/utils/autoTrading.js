@@ -34,7 +34,7 @@ export async function autoTrading(token, stopSignal) {
   const trailingStop = false;
   const SET_ROW_RSI = 30;
   const SET_HIGH_RSI = 70;
-  const TICKER = "105V04"; //미니 코스피200 4월물
+  const TICKER = "106V06"; //코스닥150
   const INTERVAL = {
     "5m": 60 * 5,
   };
@@ -120,7 +120,7 @@ export async function autoTrading(token, stopSignal) {
       ACCOUNT_TYPE,
       "02", //01:매도, 02:매수
       TICKER,
-      "2" //오더수량
+      "1" //오더수량
     );
 
     //매수 포지션 진입한 거래 내역 조회
@@ -182,7 +182,7 @@ export async function autoTrading(token, stopSignal) {
       ACCOUNT_TYPE,
       "01", //01:매도, 02:매수
       TICKER,
-      "2" //오더수량
+      "1" //오더수량
     );
 
     //매도 포지션 진입한 거래 내역 조회
