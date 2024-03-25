@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node src/init.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --exec babel-node src/init.js",
+    "build": "babel src --out-dir build",
+    "start": "npm run build && node build/init"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@babel/cli": "^7.24.1",
     "@supabase/supabase-js": "^2.39.7",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@babel/core": "^7.23.9",
     "@babel/node": "^7.23.9",
+    "@babel/plugin-transform-runtime": "^7.24.3",
     "@babel/preset-env": "^7.23.9",
     "nodemon": "^3.0.3"
   }
