@@ -7,7 +7,7 @@ export default async function sellLiquidation(
   token,
   ACCOUNT,
   ACCOUNT_TYPE,
-  TICKER,
+  ticker,
   sellPositionObj,
   contractDate
 ) {
@@ -17,7 +17,7 @@ export default async function sellLiquidation(
     ACCOUNT,
     ACCOUNT_TYPE,
     "02", //01:매도, 02:매수
-    TICKER,
+    ticker,
     sellPositionObj.orderQty //오더수량
   );
 
@@ -38,6 +38,7 @@ export default async function sellLiquidation(
 
   await sendTelegramMsg(`
   🔥매도 포지션 청산
+  티커:${ticker}
   진입 주문번호:${sellPositionObj.id}
   청산 주문번호:${contractResult.odno}
   

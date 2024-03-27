@@ -39,5 +39,6 @@ export default async function getAvailableQty(
     return resData.output;
   } catch (error) {
     console.log("kis api availableQty 에러:", error);
+    return await getAvailableQty(token, account, accountType, ticker, side);
   }
 }

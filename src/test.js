@@ -1,6 +1,12 @@
 export default async function test() {
-  let test = [1, 2, 3];
-  test.map((value) => console.log(value + 2));
-  test = [];
-  console.log(test);
+  test2("lalala");
+  test2("lelele");
+  setTimeout(() => test(), 3000);
+}
+
+let testAry = [];
+
+function test2(arg) {
+  testAry.push(arg);
+  console.log(testAry);
 }

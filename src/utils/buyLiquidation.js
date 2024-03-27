@@ -7,7 +7,7 @@ export default async function buyLiquidation(
   token,
   ACCOUNT,
   ACCOUNT_TYPE,
-  TICKER,
+  ticker,
   buyPositionObj,
   contractDate
 ) {
@@ -17,7 +17,7 @@ export default async function buyLiquidation(
     ACCOUNT,
     ACCOUNT_TYPE,
     "01", //01:매도, 02:매수
-    TICKER,
+    ticker,
     buyPositionObj.orderQty //오더수량
   );
 
@@ -38,6 +38,7 @@ export default async function buyLiquidation(
 
   await sendTelegramMsg(`
   🔥매수 포지션 청산
+  티커:${ticker}
   진입 주문번호:${buyPositionObj.id}
   청산 주문번호:${contractResult.odno}
   
