@@ -292,8 +292,8 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   );
 
   const sellPositionObj = foundsellLiquidationObj
-    ? currentPoint > foundsellLiquidationObj.targetProfit ||
-      currentPoint < foundsellLiquidationObj.targetLoss
+    ? currentPoint < foundsellLiquidationObj.targetProfit ||
+      currentPoint > foundsellLiquidationObj.targetLoss
       ? foundsellLiquidationObj
       : null
     : null;
