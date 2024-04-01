@@ -36,7 +36,7 @@ export default async function getAvailableQty(
   try {
     const res = await fetch(url, options);
     const resData = await res.json();
-    return resData.output;
+    return resData.output.ord_psbl_qty;
   } catch (error) {
     console.log("kis api availableQty 에러:", error);
     return await getAvailableQty(token, account, accountType, ticker, side);

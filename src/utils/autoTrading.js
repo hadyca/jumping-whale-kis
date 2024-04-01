@@ -95,9 +95,13 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사
   const rsiData = calculateRsi(closingPriceArr);
-
+  // const rsiData = {
+  //   beforeRsi: "29",
+  //   nowRsi: "40",
+  // };
   //------------------------------포지션 진입 로직------------------------------
 
+  //동일 시간 대 캔들봉 여부 확인
   const candleObj = entryCandleTime.find((obj) => obj.ticker === ticker);
   const isCandleTime = candleObj
     ? candleObj.currentCandleTime === currentCandleTime
@@ -118,8 +122,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "02" // 매수
     );
-
-    if (userOrderQty < availQty) {
+    if (userOrderQty > availQty) {
       console.log(
         "티커:",
         ticker,
@@ -187,7 +190,6 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       currentCandleTime,
     });
   }
-
   //시장가 매도 포지션 진입
   if (
     rsiData.beforeRsi > SET_HIGH_RSI &&
@@ -204,7 +206,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       "01" // 매도
     );
 
-    if (userOrderQty < availQty) {
+    if (userOrderQty > availQty) {
       console.log(
         "티커:",
         ticker,
