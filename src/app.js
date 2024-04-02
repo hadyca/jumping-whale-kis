@@ -11,9 +11,9 @@ const app = express();
 
 app.get("/", async (req, res) => {
   //초기시작 supabase db에서 토큰값 및 토큰만료시간 조회
+  await stopTrading();
 
   const userData = await getUserToken();
-
   console.log("🚀 트레이딩 시작");
   await startTrading(userData.token, userData.tokenExpirationTime);
   res.send("시작");
@@ -21,7 +21,7 @@ app.get("/", async (req, res) => {
 
 app.get("/stop", async (req, res) => {
   console.log("⛔ 트레이딩 정지");
-  stopTrading();
+  await stopTrading();
   res.send("자동매매정지");
 });
 
@@ -30,9 +30,5 @@ app.get("/test", async (req, res) => {
   test();
   res.send("테스트 화면");
 });
-
-// app.get("/profile", handleProfile);
-
-// app.use("/user", userRouter);
 
 export default app;

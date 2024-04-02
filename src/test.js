@@ -1,7 +1,8 @@
 export default async function test() {
-  test2("lalala");
-  test2("lelele");
-  setTimeout(() => test(), 3000);
+  const userSettingAry = [{ a: 1, b: 2 }];
+  for (const obj of userSettingAry) {
+    test2(obj);
+  }
 }
 
 let testAry = [];

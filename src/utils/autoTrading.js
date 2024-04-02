@@ -42,18 +42,19 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const ACCOUNT_TYPE = "03";
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
-  const PROFIT_PERCENT = 0.001; //0.1%
+  const PROFIT_PERCENT = 0.0015; //0.15%
   const LOSS_PERCENT = 0.001; //0.1%
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
+  const POSITION_FINISH_ENTRY_TIME = "15:30:00";
 
   //to-be:이건 5분봉 기준이다. 몇분봉에 따라서 시간이 바뀌어야함.(30분 기준 )
   const FORCED_LIQUIDATE_START_TIME = "15:34:50";
   const FORCED_LIQUIDATE_TIME = "15:35:00";
 
   //최종 거래일 기준 (최종거래일에는 아래 시간으로 세팅)
-  const LASTDAY_POSITION_ENTRY_TIME = "14:50:00";
-  const LASTDAY_FORCED_LIQUIDATE_TIME = "15:00:00";
+  // const LASTDAY_POSITION_ENTRY_TIME = "14:50:00";
+  // const LASTDAY_FORCED_LIQUIDATE_TIME = "15:00:00";
 
   // 자동봇 거래시간
   const nowKoreaHour = getKoreaHour();
@@ -73,6 +74,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   const currentPoint = parseFloat(candleValue[0].futs_prpr);
   const currentCandleTime = candleValue[0].stck_cntg_hour;
+  const currentDate = candleValue[0].stck_bsop_date;
 
   const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
   const inputHour = candleValue[candleValue.length - 1].stck_cntg_hour;
@@ -95,10 +97,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   //rsi값이 증권사 마다 구하는 공식이 다르다. 내가 구한거는 키움증권값이랑 유사
   const rsiData = calculateRsi(closingPriceArr);
-  // const rsiData = {
-  //   beforeRsi: "29",
-  //   nowRsi: "40",
-  // };
+
   //------------------------------포지션 진입 로직------------------------------
 
   //동일 시간 대 캔들봉 여부 확인
@@ -106,15 +105,13 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const isCandleTime = candleObj
     ? candleObj.currentCandleTime === currentCandleTime
     : false;
-
-  //시장가 매수 포지션 진입
   if (
     rsiData.beforeRsi < SET_ROW_RSI &&
     rsiData.nowRsi > SET_ROW_RSI &&
-    nowKoreaHour < FORCED_LIQUIDATE_START_TIME &&
+    nowKoreaHour < POSITION_FINISH_ENTRY_TIME &&
     !isCandleTime
   ) {
-    //주문 가능수량 조회
+    // 주문 가능수량 조회
     const availQty = await getAvailableQty(
       token,
       ACCOUNT,
@@ -122,11 +119,16 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "02" // 매수
     );
-    if (userOrderQty > availQty) {
+
+    if (parseInt(userOrderQty) > parseInt(availQty)) {
       console.log(
         "티커:",
         ticker,
-        "주문가능수량이 부족합니다. 주문수량을 확인하세요."
+        "오더수량:",
+        userOrderQty,
+        "주문가능수량:",
+        availQty,
+        "매수 주문가능수량이 부족합니다. 주문수량을 확인하세요."
       );
       return;
     }
@@ -145,7 +147,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       token,
       ACCOUNT,
       ACCOUNT_TYPE,
-      candleValue[0].stck_bsop_date, //매매 당시 날짜
+      currentDate, //매매 당시 날짜
       marketBuyResult.ODNO //매매 주문 번호
     );
 
@@ -190,11 +192,12 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       currentCandleTime,
     });
   }
+
   //시장가 매도 포지션 진입
   if (
     rsiData.beforeRsi > SET_HIGH_RSI &&
     rsiData.nowRsi < SET_HIGH_RSI &&
-    nowKoreaHour < FORCED_LIQUIDATE_START_TIME &&
+    nowKoreaHour < POSITION_FINISH_ENTRY_TIME &&
     !isCandleTime
   ) {
     //주문 가능수량 조회
@@ -206,11 +209,15 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       "01" // 매도
     );
 
-    if (userOrderQty > availQty) {
+    if (parseInt(userOrderQty) > parseInt(availQty)) {
       console.log(
         "티커:",
         ticker,
-        "주문가능수량이 부족합니다. 주문수량을 확인하세요."
+        "오더수량:",
+        userOrderQty,
+        "주문가능수량:",
+        availQty,
+        "매도 주문가능수량이 부족합니다. 주문수량을 확인하세요."
       );
       return;
     }
@@ -228,7 +235,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       token,
       ACCOUNT,
       ACCOUNT_TYPE,
-      candleValue[0].stck_bsop_date, //매매 당시 날짜
+      currentDate, //매매 당시 날짜
       marketSellResult.ODNO //매매 주문 번호
     );
 
@@ -314,7 +321,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
         ACCOUNT_TYPE,
         ticker,
         buyPositionObj,
-        candleValue[0].stck_bsop_date
+        currentDate
       );
       //포지션 배열에서 해당값 삭제
       const foundIndex = buyPositionAry.indexOf(buyPositionObj);
@@ -332,7 +339,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
         ACCOUNT_TYPE,
         ticker,
         sellPositionObj,
-        candleValue[0].stck_bsop_date
+        currentDate
       );
     }
 
@@ -341,35 +348,36 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     sellPositionAry.splice(foundIndex, 1);
   }
 
-  //익절/손절 구간이 아니지만 장 종료전 청산 잔량이 남았을 때 청산 로직
+  //------------------------------강제 청산 로직 (장 마감 전)------------------------------
   if (nowKoreaHour > FORCED_LIQUIDATE_START_TIME) {
     entryCandleTime = [];
 
     if (buyPositionAry.length > 0) {
       //매수 포지션 강제 청산
       buyPositionAry.map(async (obj) => {
-        await marketOrder(
+        await buyLiquidation(
           token,
           ACCOUNT,
           ACCOUNT_TYPE,
-          "01", //01:매도, 02:매수
           ticker,
-          obj.orderQty //오더수량
+          obj,
+          currentDate
         );
       });
+
       buyPositionAry = [];
     }
 
     if (sellPositionAry.length > 0) {
       //매도 포지션 강제 청산
       sellPositionAry.map(async (obj) => {
-        await marketOrder(
+        await sellLiquidation(
           token,
           ACCOUNT,
           ACCOUNT_TYPE,
-          "02", //01:매도, 02:매수
           ticker,
-          obj.orderQty //오더수량
+          obj,
+          currentDate
         );
       });
       sellPositionAry = [];

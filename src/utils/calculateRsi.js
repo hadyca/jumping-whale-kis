@@ -61,8 +61,8 @@ export default function calculateRsi(closingPriceArr) {
   const bRsi = 100 - 100 / (1 + beforeRs);
   const nRsi = 100 - 100 / (1 + nowRs);
 
-  const beforeRsi = bRsi.toFixed(2);
-  const nowRsi = nRsi.toFixed(2);
+  const beforeRsi = parseFloat(bRsi.toFixed(2));
+  const nowRsi = parseFloat(nRsi.toFixed(2));
   return { beforeRsi, nowRsi };
 }
 
