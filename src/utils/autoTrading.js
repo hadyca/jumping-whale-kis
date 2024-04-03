@@ -42,7 +42,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const ACCOUNT_TYPE = "03";
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
-  const PROFIT_PERCENT = 0.0015; //0.15%
+  const PROFIT_PERCENT = 0.001; //0.1%
   const LOSS_PERCENT = 0.001; //0.1%
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
@@ -105,6 +105,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const isCandleTime = candleObj
     ? candleObj.currentCandleTime === currentCandleTime
     : false;
+
   if (
     rsiData.beforeRsi < SET_ROW_RSI &&
     rsiData.nowRsi > SET_ROW_RSI &&
@@ -152,8 +153,12 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     );
 
     //익절,손절 목표 포인트
-    const targetProfit = currentPoint + currentPoint * PROFIT_PERCENT;
-    const targetLoss = currentPoint - currentPoint * LOSS_PERCENT;
+    const targetProfit =
+      parseFloat(contractResult.avg_idx) +
+      parseFloat(contractResult.avg_idx) * PROFIT_PERCENT;
+    const targetLoss =
+      parseFloat(contractResult.avg_idx) -
+      parseFloat(contractResult.avg_idx) * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
@@ -240,8 +245,12 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     );
 
     //익절, 손절 목표가
-    const targetProfit = currentPoint - currentPoint * PROFIT_PERCENT;
-    const targetLoss = currentPoint + currentPoint * LOSS_PERCENT;
+    const targetProfit =
+      parseFloat(contractResult.avg_idx) -
+      parseFloat(contractResult.avg_idx) * PROFIT_PERCENT;
+    const targetLoss =
+      parseFloat(contractResult.avg_idx) +
+      parseFloat(contractResult.avg_idx) * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);

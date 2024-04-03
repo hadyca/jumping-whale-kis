@@ -7,7 +7,7 @@ export function getKoreaTime() {
   return formattedDate;
 }
 
-//한국 현재 시간에서 1분 뺀거 (토큰 발급용)
+//한국 현재 시간에서 1분 더한거(토큰 발급용)
 export function getKoreaTime_plus1m() {
   const koreaOffset = 9 * 60 * 60 * 1000; // 한국 표준시(KST)의 UTC 시차는 +9시간 (밀리초 단위)
   const now = new Date();
