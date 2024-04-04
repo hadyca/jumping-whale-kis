@@ -1,3 +1,4 @@
+import getAvailableQty from "../api/availableQty";
 import getContractDetail from "../api/contractDetail";
 import marketOrder from "../api/marketOrder";
 import convertComma from "./commas";
@@ -11,6 +12,26 @@ export default async function sellLiquidation(
   sellPositionObj,
   contractDate
 ) {
+  const availQty = await getAvailableQty(
+    token,
+    ACCOUNT,
+    ACCOUNT_TYPE,
+    ticker,
+    "01" // 매도
+  );
+  if (parseInt(sellPositionObj.orderQty) > parseInt(availQty.lqd_psbl_qty1)) {
+    console.log(
+      "티커:",
+      ticker,
+      "청산요청수량:",
+      sellPositionObj.orderQty,
+      "청산가능수량:",
+      availQty.lqd_psbl_qty1,
+      "매도 청산가능수량이 부족합니다. 주문수량을 확인하세요."
+    );
+    return;
+  }
+
   //시장가 매수로 청산
   const marketBuyResult = await marketOrder(
     token,

@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import getCandle from "./../api/candle";
 import getCandle_2 from "./../api/candle_2";
 import getClosingPrice from "./reverse_closing";
@@ -17,11 +16,6 @@ let buyPositionAry = [];
 let sellPositionAry = [];
 let entryCandleTime = [];
 
-let trailingBuyPositionAry = [];
-let maxValueTrailBuyPositionAry;
-let trailingSellPositionAry = [];
-let maxValueTrailSuyPositionAry;
-
 export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   if (stopSignal) {
     buyPositionAry = [];
@@ -31,9 +25,10 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     return;
   }
 
-  const trailingStop = false;
   const SET_ROW_RSI = 30;
+  const SET_ROW_RSI_OVER = 31;
   const SET_HIGH_RSI = 70;
+  const SET_HIGH_RSI_OVER = 69;
   const INTERVAL = {
     "5m": 60 * 5,
   };
@@ -42,8 +37,8 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const ACCOUNT_TYPE = "03";
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
-  const PROFIT_PERCENT = 0.001; //0.1%
-  const LOSS_PERCENT = 0.001; //0.1%
+  const PROFIT_PERCENT = 0.0012; //0.12%
+  const LOSS_PERCENT = 0.005; //0.5%
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
   const POSITION_FINISH_ENTRY_TIME = "15:30:00";
@@ -58,15 +53,13 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   // 자동봇 거래시간
   const nowKoreaHour = getKoreaHour();
-
   //to-be최종거래일일 때 자동거래시간 세팅필요
 
   //첫번째 캔들값 (102개 조회)
   const candleValue = await getCandle(token, ticker, INTERVAL["5m"]);
   if (
     nowKoreaHour < POSITION_FIRST_ENTRY_TIME ||
-    nowKoreaHour > FORCED_LIQUIDATE_TIME ||
-    candleValue[0].stck_cntg_hour === "084500"
+    nowKoreaHour > FORCED_LIQUIDATE_TIME
   ) {
     console.log("자동 봇 매매 시간이 아닙니다.");
     return;
@@ -108,8 +101,9 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   if (
     rsiData.beforeRsi < SET_ROW_RSI &&
-    rsiData.nowRsi > SET_ROW_RSI &&
+    rsiData.nowRsi > SET_ROW_RSI_OVER &&
     nowKoreaHour < POSITION_FINISH_ENTRY_TIME &&
+    currentCandleTime !== "084500" &&
     !isCandleTime
   ) {
     // 주문 가능수량 조회
@@ -121,11 +115,11 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       "02" // 매수
     );
 
-    if (parseInt(userOrderQty) > parseInt(availQty)) {
+    if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
         ticker,
-        "오더수량:",
+        "주문요청수량:",
         userOrderQty,
         "주문가능수량:",
         availQty,
@@ -163,21 +157,6 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
 
-    //텔레그램 알람
-    await sendTelegramMsg(`
-🔼매수 포지션 진입
-티커:${ticker}
-진입 주문번호:${contractResult.odno}
-
-진입 계약수량:${contractResult.tot_ccld_qty}
-진입 평균체결:${contractResult.avg_idx}
-진입 총체결금액:${commaTotalPrice}
-
-🐋🐋🐋
-익절목표:${targetProfit}
-손절목표:${targetLoss}
-    `);
-
     //포지션 객체 생성 및 배열에 객체 넣기
     const newPosition = {
       ticker,
@@ -196,13 +175,31 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       currentCandleTime,
     });
+
+    //텔레그램 알람
+    await sendTelegramMsg(`
+        🔼매수 포지션 진입
+        티커:${ticker}
+        진입 주문번호:${contractResult.odno}
+        
+        진입 계약수량:${contractResult.tot_ccld_qty}
+        진입 평균체결:${contractResult.avg_idx}
+        진입 총체결금액:${commaTotalPrice}
+        
+        🐋🐋🐋
+        익절목표:${targetProfit}
+        손절목표:${targetLoss}
+            `);
+
+    return;
   }
 
   //시장가 매도 포지션 진입
   if (
     rsiData.beforeRsi > SET_HIGH_RSI &&
-    rsiData.nowRsi < SET_HIGH_RSI &&
+    rsiData.nowRsi < SET_HIGH_RSI_OVER &&
     nowKoreaHour < POSITION_FINISH_ENTRY_TIME &&
+    currentCandleTime !== "084500" &&
     !isCandleTime
   ) {
     //주문 가능수량 조회
@@ -214,11 +211,11 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       "01" // 매도
     );
 
-    if (parseInt(userOrderQty) > parseInt(availQty)) {
+    if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
         ticker,
-        "오더수량:",
+        "주문요청수량:",
         userOrderQty,
         "주문가능수량:",
         availQty,
@@ -255,20 +252,6 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
 
-    //텔레그램 알람
-    await sendTelegramMsg(`
-🔽매도 포지션 진입
-티커:${ticker}
-진입 주문번호:${contractResult.odno}
-
-진입 계약수량:${contractResult.tot_ccld_qty}
-진입 평균체결:${contractResult.avg_idx}
-진입 총체결금액:${commaTotalPrice}
-    
-🐋익절목표:${targetProfit}
-🐋손절목표:${targetLoss}
-`);
-
     //포지션 객체 생성 및 배열에 객체 넣기
     const newPosition = {
       ticker,
@@ -287,6 +270,22 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       currentCandleTime,
     });
+
+    //텔레그램 알람
+    await sendTelegramMsg(`
+        🔽매도 포지션 진입
+        티커:${ticker}
+        진입 주문번호:${contractResult.odno}
+        
+        진입 계약수량:${contractResult.tot_ccld_qty}
+        진입 평균체결:${contractResult.avg_idx}
+        진입 총체결금액:${commaTotalPrice}
+            
+        🐋익절목표:${targetProfit}
+        🐋손절목표:${targetLoss}
+        `);
+
+    return;
   }
 
   //------------------------------청산 로직------------------------------
@@ -318,43 +317,37 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   //매수 포지션 청산 로직
   if (buyPositionObj) {
-    if (trailingStop) {
-      if (!trailingBuyPositionAry.includes(currentPoint)) {
-        trailingBuyPositionAry.push(currentPoint);
-        maxValueTrailBuyPositionAry = Math.max(...trailingBuyPositionAry);
-      }
-    } else {
-      await buyLiquidation(
-        token,
-        ACCOUNT,
-        ACCOUNT_TYPE,
-        ticker,
-        buyPositionObj,
-        currentDate
-      );
-      //포지션 배열에서 해당값 삭제
-      const foundIndex = buyPositionAry.indexOf(buyPositionObj);
-      buyPositionAry.splice(foundIndex, 1);
-    }
+    //포지션 배열에서 해당값 삭제
+    const foundIndex = buyPositionAry.indexOf(buyPositionObj);
+    buyPositionAry.splice(foundIndex, 1);
+
+    await buyLiquidation(
+      token,
+      ACCOUNT,
+      ACCOUNT_TYPE,
+      ticker,
+      buyPositionObj,
+      currentDate
+    );
+    return;
   }
 
   //매도 포지션 청산 로직
   if (sellPositionObj) {
-    if (trailingStop) {
-    } else {
-      await sellLiquidation(
-        token,
-        ACCOUNT,
-        ACCOUNT_TYPE,
-        ticker,
-        sellPositionObj,
-        currentDate
-      );
-    }
-
     //포지션 배열에서 해당값 삭제
     const foundIndex = sellPositionAry.indexOf(sellPositionObj);
     sellPositionAry.splice(foundIndex, 1);
+
+    await sellLiquidation(
+      token,
+      ACCOUNT,
+      ACCOUNT_TYPE,
+      ticker,
+      sellPositionObj,
+      currentDate
+    );
+
+    return;
   }
 
   //------------------------------강제 청산 로직 (장 마감 전)------------------------------
@@ -363,6 +356,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
     if (buyPositionAry.length > 0) {
       //매수 포지션 강제 청산
+      buyPositionAry = [];
       buyPositionAry.map(async (obj) => {
         await buyLiquidation(
           token,
@@ -374,12 +368,13 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
         );
       });
 
-      buyPositionAry = [];
+      return;
     }
 
     if (sellPositionAry.length > 0) {
       //매도 포지션 강제 청산
       sellPositionAry.map(async (obj) => {
+        sellPositionAry = [];
         await sellLiquidation(
           token,
           ACCOUNT,
@@ -389,7 +384,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
           currentDate
         );
       });
-      sellPositionAry = [];
+      return;
     }
   }
 
@@ -411,4 +406,5 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     "/ 매도 포지션",
     sellPositionLength
   );
+  return;
 }

@@ -1,13 +1,7 @@
 export default async function test() {
-  const userSettingAry = [{ a: 1, b: 2 }];
-  for (const obj of userSettingAry) {
-    test2(obj);
+  if (true) {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log("첫번째");
   }
-}
-
-let testAry = [];
-
-function test2(arg) {
-  testAry.push(arg);
-  console.log(testAry);
+  console.log("두번째");
 }
