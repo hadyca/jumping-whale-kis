@@ -17,7 +17,7 @@ export default async function buyLiquidation(
     ACCOUNT,
     ACCOUNT_TYPE,
     ticker,
-    "02" // 매수
+    "01" // 매도
   );
 
   if (parseInt(buyPositionObj.orderQty) > parseInt(availQty.lqd_psbl_qty1)) {

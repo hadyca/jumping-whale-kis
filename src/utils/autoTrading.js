@@ -38,7 +38,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
   const PROFIT_PERCENT = 0.0012; //0.12%
-  const LOSS_PERCENT = 0.005; //0.5%
+  const LOSS_PERCENT = PROFIT_PERCENT * 3;
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
   const POSITION_FINISH_ENTRY_TIME = "15:30:00";
@@ -114,7 +114,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "02" // 매수
     );
-
+    console.log(availQty);
     if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
@@ -210,7 +210,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "01" // 매도
     );
-
+    console.log(availQty);
     if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
@@ -318,8 +318,11 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   //매수 포지션 청산 로직
   if (buyPositionObj) {
     //포지션 배열에서 해당값 삭제
-    const foundIndex = buyPositionAry.indexOf(buyPositionObj);
-    buyPositionAry.splice(foundIndex, 1);
+    await new Promise((resolve) => {
+      const foundIndex = buyPositionAry.indexOf(buyPositionObj);
+      buyPositionAry.splice(foundIndex, 1);
+      resolve();
+    });
 
     await buyLiquidation(
       token,
@@ -335,8 +338,11 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   //매도 포지션 청산 로직
   if (sellPositionObj) {
     //포지션 배열에서 해당값 삭제
-    const foundIndex = sellPositionAry.indexOf(sellPositionObj);
-    sellPositionAry.splice(foundIndex, 1);
+    await new Promise((resolve) => {
+      const foundIndex = sellPositionAry.indexOf(sellPositionObj);
+      sellPositionAry.splice(foundIndex, 1);
+      resolve();
+    });
 
     await sellLiquidation(
       token,
@@ -356,7 +362,6 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
 
     if (buyPositionAry.length > 0) {
       //매수 포지션 강제 청산
-      buyPositionAry = [];
       buyPositionAry.map(async (obj) => {
         await buyLiquidation(
           token,
@@ -367,14 +372,13 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
           currentDate
         );
       });
-
+      buyPositionAry = [];
       return;
     }
 
     if (sellPositionAry.length > 0) {
       //매도 포지션 강제 청산
       sellPositionAry.map(async (obj) => {
-        sellPositionAry = [];
         await sellLiquidation(
           token,
           ACCOUNT,
@@ -384,10 +388,12 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
           currentDate
         );
       });
+      sellPositionAry = [];
       return;
     }
   }
 
+  //------------------------------콘솔 로그------------------------------
   const buyPositionLength = buyPositionAry.filter(
     (obj) => obj.ticker === ticker
   ).length;

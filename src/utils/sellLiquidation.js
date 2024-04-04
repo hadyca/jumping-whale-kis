@@ -17,7 +17,7 @@ export default async function sellLiquidation(
     ACCOUNT,
     ACCOUNT_TYPE,
     ticker,
-    "01" // 매도
+    "02" // 매수
   );
   if (parseInt(sellPositionObj.orderQty) > parseInt(availQty.lqd_psbl_qty1)) {
     console.log(
