@@ -37,7 +37,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   const ACCOUNT_TYPE = "03";
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
-  const PROFIT_PERCENT = 0.0012; //0.12%
+  const PROFIT_PERCENT = 0.001; //0.12%
   const LOSS_PERCENT = PROFIT_PERCENT * 3;
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
