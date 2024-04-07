@@ -9,6 +9,7 @@ export default async function buyLiquidation(
   ACCOUNT,
   ACCOUNT_TYPE,
   ticker,
+  tickerKor,
   buyPositionObj,
   contractDate
 ) {
@@ -22,8 +23,8 @@ export default async function buyLiquidation(
 
   if (parseInt(buyPositionObj.orderQty) > parseInt(availQty.lqd_psbl_qty1)) {
     console.log(
-      "티커:",
-      ticker,
+      "자산:",
+      tickerKor,
       "청산요청수량:",
       buyPositionObj.orderQty,
       "청산가능수량:",
@@ -60,7 +61,7 @@ export default async function buyLiquidation(
 
   await sendTelegramMsg(`
   🔥매수 포지션 청산
-  티커:${ticker}
+  자산:${tickerKor}
   진입 주문번호:${buyPositionObj.id}
   청산 주문번호:${contractResult.odno}
   

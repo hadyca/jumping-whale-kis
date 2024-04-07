@@ -16,7 +16,13 @@ let buyPositionAry = [];
 let sellPositionAry = [];
 let entryCandleTime = [];
 
-export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
+export async function autoTrading(
+  token,
+  stopSignal,
+  ticker,
+  userOrderQty,
+  tickerKor
+) {
   if (stopSignal) {
     buyPositionAry = [];
     sellPositionAry = [];
@@ -179,7 +185,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     //텔레그램 알람
     await sendTelegramMsg(`
         🔼매수 포지션 진입
-        티커:${ticker}
+        자산:${tickerKor}
         진입 주문번호:${contractResult.odno}
         
         진입 계약수량:${contractResult.tot_ccld_qty}
@@ -274,7 +280,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
     //텔레그램 알람
     await sendTelegramMsg(`
         🔽매도 포지션 진입
-        티커:${ticker}
+        자산:${tickerKor}
         진입 주문번호:${contractResult.odno}
         
         진입 계약수량:${contractResult.tot_ccld_qty}
@@ -368,6 +374,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
           ACCOUNT,
           ACCOUNT_TYPE,
           ticker,
+          tickerKor,
           obj,
           currentDate
         );
@@ -384,6 +391,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
           ACCOUNT,
           ACCOUNT_TYPE,
           ticker,
+          tickerKor,
           obj,
           currentDate
         );
@@ -402,8 +410,8 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
   ).length;
 
   console.log(
-    "티커:",
-    ticker,
+    "자산:",
+    tickerKor,
     rsiData,
     "/ 현재가:",
     currentPoint,
