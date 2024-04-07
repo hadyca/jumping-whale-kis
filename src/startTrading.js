@@ -12,8 +12,8 @@ export async function startTrading(token, tokenExpirationTime) {
   const nowKoreaDate = getKoreaTime();
 
   const userSettingAry = [
-    { TICKER: "106V06", USER_ORDER_QTY: "5" }, // 코스닥
-    { TICKER: "105V04", USER_ORDER_QTY: "5" }, // 미니 코스피
+    { ticker: "106V06", userOrderQty: "5" }, // 코스닥
+    { ticker: "105V04", userOrderQty: "5" }, // 미니 코스피
   ];
 
   if (
@@ -37,7 +37,11 @@ export async function startTrading(token, tokenExpirationTime) {
   //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
   if (token !== null && nowKoreaDate < tokenExpirationTime) {
     for (const obj of userSettingAry) {
-      await autoTrading(token, false, obj.TICKER, obj.USER_ORDER_QTY);
+      await new Promise((resolve) => {
+        autoTrading(token, false, obj.ticker, obj.userOrderQty).then(() =>
+          resolve()
+        );
+      });
     }
     startTradingTimeout = setTimeout(
       () => startTrading(token, tokenExpirationTime),

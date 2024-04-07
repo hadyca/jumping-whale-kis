@@ -114,7 +114,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "02" // 매수
     );
-    console.log(availQty);
+
     if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
@@ -210,7 +210,7 @@ export async function autoTrading(token, stopSignal, ticker, userOrderQty) {
       ticker,
       "01" // 매도
     );
-    console.log(availQty);
+
     if (parseInt(userOrderQty) > parseInt(availQty.ord_psbl_qty)) {
       console.log(
         "티커:",
