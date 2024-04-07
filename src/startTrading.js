@@ -45,7 +45,7 @@ export async function startTrading(token, tokenExpirationTime) {
     }
     startTradingTimeout = setTimeout(
       () => startTrading(token, tokenExpirationTime),
-      1000
+      500
     );
   }
 }
