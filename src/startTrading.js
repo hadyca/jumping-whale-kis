@@ -5,19 +5,16 @@ import supabase from "./supabaseClient";
 import { autoTrading } from "./utils/autoTrading";
 
 let startTradingTimeout;
-
 export async function startTrading(token, tokenExpirationTime) {
   //기존 토큰만료시간이 지났거나, supabase 조회 시 토큰값이 null인 경우 kis에서 token값 받아온 후, db에 저장
-  const nowKoreaDatePlus1m = getKoreaTime_plus1m();
   const nowKoreaDate = getKoreaTime();
-
   const userSettingAry = [
     { ticker: "106V06", userOrderQty: "5", tickerKor: "코스닥150(6월)" },
     { ticker: "101V06", userOrderQty: "1", tickerKor: "코스피200(6월)" },
   ];
 
   if (
-    nowKoreaDatePlus1m >= tokenExpirationTime ||
+    nowKoreaDate >= tokenExpirationTime ||
     token === null ||
     tokenExpirationTime === null
   ) {
@@ -31,26 +28,38 @@ export async function startTrading(token, tokenExpirationTime) {
         tokenExpirationTime: tokenData?.access_token_token_expired,
       })
       .select();
-    startTrading(tokenData.access_token, tokenData.access_token_token_expired);
+    clearTimeout(startTradingTimeout);
+    return startTrading(
+      tokenData.access_token,
+      tokenData.access_token_token_expired
+    );
   }
 
   //토큰값이 있고, 현재시간이 만료시간이 지나지 않았으면 자동매매 시작
   if (token !== null && nowKoreaDate < tokenExpirationTime) {
     for (const userObj of userSettingAry) {
-      await new Promise((resolve) => {
-        autoTrading(
-          token,
-          false,
-          userObj.ticker,
-          userObj.userOrderQty,
-          userObj.tickerKor
-        ).then(() => resolve());
-      });
+      await autoTrading(
+        token,
+        false,
+        userObj.ticker,
+        userObj.userOrderQty,
+        userObj.tickerKor
+      );
+      //중복 매매 되면 다시 요걸로..
+      // await new Promise((resolve) => {
+      //   autoTrading(
+      //     token,
+      //     false,
+      //     userObj.ticker,
+      //     userObj.userOrderQty,
+      //     userObj.tickerKor
+      //   ).then(() => resolve());
+      // });
     }
-    startTradingTimeout = setTimeout(
+    return (startTradingTimeout = setTimeout(
       () => startTrading(token, tokenExpirationTime),
       500
-    );
+    ));
   }
 }
 

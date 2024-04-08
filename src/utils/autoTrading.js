@@ -149,7 +149,7 @@ export async function autoTrading(
       ACCOUNT,
       ACCOUNT_TYPE,
       currentDate, //매매 당시 날짜
-      marketBuyResult.ODNO //매매 주문 번호
+      marketBuyResult?.ODNO //매매 주문 번호
     );
 
     //익절,손절 목표 포인트
@@ -244,7 +244,7 @@ export async function autoTrading(
       ACCOUNT,
       ACCOUNT_TYPE,
       currentDate, //매매 당시 날짜
-      marketSellResult.ODNO //매매 주문 번호
+      marketSellResult?.ODNO //매매 주문 번호
     );
 
     //익절, 손절 목표가
@@ -335,6 +335,7 @@ export async function autoTrading(
       ACCOUNT,
       ACCOUNT_TYPE,
       ticker,
+      tickerKor,
       buyPositionObj,
       currentDate
     );
@@ -355,6 +356,7 @@ export async function autoTrading(
       ACCOUNT,
       ACCOUNT_TYPE,
       ticker,
+      tickerKor,
       sellPositionObj,
       currentDate
     );
