@@ -74,7 +74,6 @@ export async function autoTrading(
   const currentPoint = parseFloat(candleValue[0].futs_prpr);
   const currentCandleTime = candleValue[0].stck_cntg_hour;
   const currentDate = candleValue[0].stck_bsop_date;
-
   const inputDate = candleValue[candleValue.length - 1].stck_bsop_date;
   const inputHour = candleValue[candleValue.length - 1].stck_cntg_hour;
   //두번째 캔들값 (102개 조회)
@@ -143,22 +142,21 @@ export async function autoTrading(
       userOrderQty
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     //매수 포지션 진입한 거래 내역 조회
     const contractResult = await getContractDetail(
       token,
       ACCOUNT,
       ACCOUNT_TYPE,
       currentDate, //매매 당시 날짜
-      marketBuyResult?.ODNO //매매 주문 번호
+      marketBuyResult.ODNO //매매 주문 번호
     );
 
+    const avgPoint = parseFloat(contractResult.avg_idx);
     //익절,손절 목표 포인트
-    const targetProfit =
-      parseFloat(contractResult.avg_idx) +
-      parseFloat(contractResult.avg_idx) * PROFIT_PERCENT;
-    const targetLoss =
-      parseFloat(contractResult.avg_idx) -
-      parseFloat(contractResult.avg_idx) * LOSS_PERCENT;
+    const targetProfit = avgPoint + avgPoint * PROFIT_PERCENT;
+    const targetLoss = avgPoint - avgPoint * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);
@@ -238,22 +236,21 @@ export async function autoTrading(
       userOrderQty //오더수량
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     //매도 포지션 진입한 거래 내역 조회
     const contractResult = await getContractDetail(
       token,
       ACCOUNT,
       ACCOUNT_TYPE,
       currentDate, //매매 당시 날짜
-      marketSellResult?.ODNO //매매 주문 번호
+      marketSellResult.ODNO //매매 주문 번호
     );
 
+    const avgPoint = parseFloat(contractResult.avg_idx);
     //익절, 손절 목표가
-    const targetProfit =
-      parseFloat(contractResult.avg_idx) -
-      parseFloat(contractResult.avg_idx) * PROFIT_PERCENT;
-    const targetLoss =
-      parseFloat(contractResult.avg_idx) +
-      parseFloat(contractResult.avg_idx) * LOSS_PERCENT;
+    const targetProfit = avgPoint - avgPoint * PROFIT_PERCENT;
+    const targetLoss = avgPoint + avgPoint * LOSS_PERCENT;
 
     const totalPrice = contractResult.tot_ccld_amt;
     const commaTotalPrice = convertComma(totalPrice);

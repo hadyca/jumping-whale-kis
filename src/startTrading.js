@@ -9,8 +9,8 @@ export async function startTrading(token, tokenExpirationTime) {
   //기존 토큰만료시간이 지났거나, supabase 조회 시 토큰값이 null인 경우 kis에서 token값 받아온 후, db에 저장
   const nowKoreaDate = getKoreaTime();
   const userSettingAry = [
-    { ticker: "106V06", userOrderQty: "5", tickerKor: "코스닥150(6월)" },
-    { ticker: "101V06", userOrderQty: "1", tickerKor: "코스피200(6월)" },
+    { ticker: "106V06", userOrderQty: "23", tickerKor: "코스닥150(6월)" },
+    { ticker: "101V06", userOrderQty: "5", tickerKor: "코스피200(6월)" },
   ];
 
   if (
@@ -56,10 +56,12 @@ export async function startTrading(token, tokenExpirationTime) {
       //   ).then(() => resolve());
       // });
     }
-    return (startTradingTimeout = setTimeout(
-      () => startTrading(token, tokenExpirationTime),
-      500
-    ));
+    return await new Promise((resolve) => {
+      setTimeout(() => {
+        startTrading(token, tokenExpirationTime);
+        resolve();
+      }, 500);
+    });
   }
 }
 

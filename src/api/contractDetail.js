@@ -42,6 +42,11 @@ export default async function getContractDetail(
   try {
     const res = await fetch(url, options);
     const resData = await res.json();
+    if (resData.output1.length === 0) {
+      console.log("output1이 빈 배열입니다. 1초 후에 다시 실행합니다.");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return getContractDetail(token, account, accountType, today, orderId);
+    }
     return resData.output1[0];
   } catch (error) {
     console.log("kis api contractDetail 에러:", error);
