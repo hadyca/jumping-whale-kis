@@ -30,8 +30,8 @@ export async function autoTrading(
 
     return;
   }
-
-  const SET_ROW_RSI = 30;
+  const SET_ROW_RSI_MIN = 20;
+  const SET_ROW_RSI_MAX = 30;
   const SET_ROW_RSI_OVER = 31;
   const SET_HIGH_RSI = 70;
   const SET_HIGH_RSI_OVER = 69;
@@ -43,11 +43,11 @@ export async function autoTrading(
   const ACCOUNT_TYPE = "03";
 
   //to-be: 수익 퍼센티지 설정 (트레일링으로 만들어보기, 감시가 대비 0.04p하락)
-  const PROFIT_PERCENT = 0.001; //0.12%
-  const LOSS_PERCENT = PROFIT_PERCENT * 3;
+  const PROFIT_PERCENT = 0.001; //0.1%
+  const LOSS_PERCENT = PROFIT_PERCENT * 2;
 
   const POSITION_FIRST_ENTRY_TIME = "08:45:00";
-  const POSITION_FINISH_ENTRY_TIME = "15:30:00";
+  const POSITION_FINISH_ENTRY_TIME = "09:15:00";
 
   //to-be:이건 5분봉 기준이다. 몇분봉에 따라서 시간이 바뀌어야함.(30분 기준 )
   const FORCED_LIQUIDATE_START_TIME = "15:34:50";
@@ -105,7 +105,8 @@ export async function autoTrading(
     : false;
 
   if (
-    rsiData.beforeRsi < SET_ROW_RSI &&
+    rsiData.beforeRsi > SET_ROW_RSI_MIN &&
+    rsiData.beforeRsi < SET_ROW_RSI_MAX &&
     rsiData.nowRsi > SET_ROW_RSI_OVER &&
     nowKoreaHour < POSITION_FINISH_ENTRY_TIME &&
     currentCandleTime !== "084500" &&
